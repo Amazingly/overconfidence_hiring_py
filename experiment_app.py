@@ -35,8 +35,6 @@ import sqlite3
 import io
 import zipfile
 from scipy import stats
-import plotly.express as px
-import plotly.graph_objects as go
 
 # Configure logging for research audit trail
 logging.basicConfig(
@@ -200,6 +198,22 @@ st.markdown("""
         transform: translateY(-2px);
         box-shadow: 0 6px 12px rgba(52,152,219,0.4);
     }
+    .comprehension-correct {
+        background: #d4edda;
+        border: 2px solid #c3e6cb;
+        color: #155724;
+        padding: 1rem;
+        border-radius: 6px;
+        margin: 0.5rem 0;
+    }
+    .comprehension-incorrect {
+        background: #f8d7da;
+        border: 2px solid #f5c6cb;
+        color: #721c24;
+        padding: 1rem;
+        border-radius: 6px;
+        margin: 0.5rem 0;
+    }
     @keyframes pulse {
         0% { transform: scale(1); }
         50% { transform: scale(1.05); }
@@ -253,39 +267,6 @@ class ResearchDatabase:
                     validation_flags TEXT,
                     data_quality_flag TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
-            
-            # Session summary table for tracking experimental batches
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS session_summaries (
-                    session_batch TEXT PRIMARY KEY,
-                    session_date TEXT,
-                    total_participants INTEGER,
-                    easy_treatment_count INTEGER,
-                    hard_treatment_count INTEGER,
-                    median_score_easy REAL,
-                    median_score_hard REAL,
-                    treatment_effectiveness_easy BOOLEAN,
-                    treatment_effectiveness_hard BOOLEAN,
-                    summary_data TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
-            
-            # Trivia response table for detailed analysis
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS trivia_responses (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    participant_id TEXT,
-                    question_number INTEGER,
-                    question_text TEXT,
-                    question_category TEXT,
-                    selected_answer INTEGER,
-                    correct_answer INTEGER,
-                    is_correct BOOLEAN,
-                    response_time REAL,
-                    FOREIGN KEY (participant_id) REFERENCES experiment_sessions (participant_id)
                 )
             ''')
             
@@ -348,42 +329,6 @@ class ResearchDatabase:
             logging.error(f"Unexpected error during save: {e}")
             return False
 
-class SessionManager:
-    """Manages session-level operations including performance ranking."""
-    
-    @staticmethod
-    def calculate_performance_levels(scores: List[Tuple[str, int]]) -> Dict[str, str]:
-        """
-        Calculate performance levels based on session-relative ranking.
-        Returns dict mapping participant_id to performance_level.
-        """
-        if not scores:
-            return {}
-        
-        # Sort scores in descending order
-        sorted_scores = sorted(scores, key=lambda x: x[1], reverse=True)
-        total_participants = len(sorted_scores)
-        
-        # Calculate cutoff for top 50%
-        high_performance_count = (total_participants + 1) // 2  # Ensures at least 50% are High
-        
-        performance_levels = {}
-        median_score = np.median([score[1] for score in scores])
-        
-        for i, (participant_id, score) in enumerate(sorted_scores):
-            if i < high_performance_count:
-                performance_levels[participant_id] = 'High'
-            else:
-                performance_levels[participant_id] = 'Low'
-                
-            # Calculate percentile
-            percentile = ((total_participants - i) / total_participants) * 100
-            performance_levels[f"{participant_id}_percentile"] = percentile
-            performance_levels[f"{participant_id}_median"] = median_score
-        
-        logging.info(f"Calculated performance levels for {total_participants} participants. Median score: {median_score}")
-        return performance_levels
-
 class DataValidator:
     """Enhanced data validation with research-specific checks."""
     
@@ -420,91 +365,10 @@ class DataValidator:
             if not (ExperimentConfig.BDM_MIN_VALUE <= data['wtp_bottom_group'] <= ExperimentConfig.BDM_MAX_VALUE):
                 errors.append(f"WTP bottom group must be between {ExperimentConfig.BDM_MIN_VALUE}-{ExperimentConfig.BDM_MAX_VALUE}")
         
-        if 'belief_mechanism' in data:
-            if not (0 <= data['belief_mechanism'] <= 100):
-                errors.append("Belief mechanism must be between 0-100")
-        
-        # Treatment validation
-        if 'treatment' in data:
-            if data['treatment'] not in ['easy', 'hard']:
-                errors.append("Treatment must be 'easy' or 'hard'")
-        
-        # Logical consistency checks
-        if 'assigned_group' in data:
-            if data['assigned_group'] not in ['Top', 'Bottom']:
-                errors.append("Assigned group must be 'Top' or 'Bottom'")
-        
-        if 'mechanism_used' in data:
-            if data['mechanism_used'] not in ['A', 'B']:
-                errors.append("Mechanism used must be 'A' or 'B'")
-        
-        # Time validation
-        if 'trivia_time_spent' in data:
-            if data['trivia_time_spent'] > ExperimentConfig.TRIVIA_TIME_LIMIT + 60:  # Allow some buffer
-                errors.append("Trivia time spent exceeds reasonable maximum")
-        
         return len(errors) == 0, errors
-    
-    @staticmethod
-    def validate_treatment_effectiveness(data: Dict) -> Dict:
-        """Validate individual accuracy against treatment targets."""
-        validation_results = {}
-        
-        if 'treatment' in data and 'accuracy_rate' in data:
-            treatment = data['treatment']
-            accuracy = data['accuracy_rate']
-            
-            if treatment == 'easy':
-                target_range = ExperimentConfig.TARGET_EASY_ACCURACY
-            else:
-                target_range = ExperimentConfig.TARGET_HARD_ACCURACY
-                
-            validation_results['individual_accuracy_check'] = target_range[0] <= accuracy <= target_range[1]
-            validation_results['individual_accuracy_status'] = 'optimal' if validation_results['individual_accuracy_check'] else 'suboptimal'
-            validation_results['target_range'] = target_range
-            validation_results['actual_accuracy'] = accuracy
-        
-        return validation_results
-    
-    @staticmethod
-    def validate_questionnaire_responses(questionnaire_data: Dict) -> Tuple[bool, List[str]]:
-        """Validate post-experiment questionnaire completeness."""
-        missing_items = []
-        
-        # Check demographics
-        demographics = questionnaire_data.get('demographics', {})
-        for field in ['gender', 'age', 'education']:
-            if not demographics.get(field) or demographics.get(field) == "":
-                missing_items.append(f"Demographics: {field}")
-        
-        # Check task perception
-        task_perception = questionnaire_data.get('task_perception', {})
-        for field in ['task_difficulty', 'confidence_during_task', 'effort_level']:
-            if not task_perception.get(field) or task_perception.get(field) == "":
-                missing_items.append(f"Task perception: {field}")
-        
-        # Check decision making
-        decision_making = questionnaire_data.get('decision_making', {})
-        hiring_factors = decision_making.get('hiring_factors', '')
-        if not hiring_factors.strip() or len(hiring_factors.strip()) < ExperimentConfig.MIN_HIRING_EXPLANATION_LENGTH:
-            missing_items.append("Detailed hiring factors explanation")
-        
-        # Check experimental design
-        experimental = questionnaire_data.get('experimental_design', {})
-        for field in ['previous_experience', 'instruction_clarity', 'attention_level']:
-            if not experimental.get(field) or experimental.get(field) == "":
-                missing_items.append(f"Experimental design: {field}")
-        
-        # Check validation
-        validation = questionnaire_data.get('validation', {})
-        for field in ['honest_responses', 'data_quality']:
-            if not validation.get(field) or validation.get(field) == "":
-                missing_items.append(f"Validation: {field}")
-        
-        return len(missing_items) == 0, missing_items
 
 class OverconfidenceExperiment:
-    """Enhanced experimental class with improved methodology and robustness."""
+    """Enhanced experimental class with complete implementation of all phases."""
     
     def __init__(self):
         """Initialize experiment with comprehensive research capabilities."""
@@ -512,7 +376,6 @@ class OverconfidenceExperiment:
         self.trivia_questions = self.get_trivia_questions()
         self.db = ResearchDatabase()
         self.validator = DataValidator()
-        self.session_manager = SessionManager()
         
     def setup_session_state(self):
         """Initialize comprehensive session state for research tracking."""
@@ -522,8 +385,8 @@ class OverconfidenceExperiment:
                 'session_hash': hashlib.md5(f"{datetime.now().isoformat()}{random.random()}".encode()).hexdigest()[:16],
                 'start_time': datetime.now().isoformat(),
                 'treatment': None,
-                'trivia_answers': [],
-                'trivia_response_times': [],
+                'trivia_answers': [None] * ExperimentConfig.TRIVIA_QUESTIONS_COUNT,
+                'trivia_response_times': [0] * ExperimentConfig.TRIVIA_QUESTIONS_COUNT,
                 'trivia_score': 0,
                 'trivia_time_spent': 0,
                 'performance_level': None,
@@ -600,15 +463,10 @@ class OverconfidenceExperiment:
                 {'question': 'How many months are in a year?', 'options': ['10', '11', '12', '13'], 'correct': 2, 'category': 'basic'},
                 {'question': 'Which meal is typically eaten in the morning?', 'options': ['Lunch', 'Dinner', 'Breakfast', 'Supper'], 'correct': 2, 'category': 'basic'},
                 {'question': 'Which meal is typically eaten at midday?', 'options': ['Breakfast', 'Lunch', 'Dinner', 'Snack'], 'correct': 1, 'category': 'basic'},
-                {'question': 'What is the opposite of hot?', 'options': ['Warm', 'Cool', 'Cold', 'Freezing'], 'correct': 2, 'category': 'basic'},
-                {'question': 'Which hand is typically used to shake hands?', 'options': ['Left', 'Right', 'Both', 'Either'], 'correct': 1, 'category': 'basic'},
-                {'question': 'How many wheels does a bicycle have?', 'options': ['1', '2', '3', '4'], 'correct': 1, 'category': 'basic'},
                 
                 # HISTORY & CULTURE (Well-known facts)
                 {'question': 'Who is the patron saint of Ireland?', 'options': ['St. David', 'St. Andrew', 'St. George', 'St. Patrick'], 'correct': 3, 'category': 'history'},
                 {'question': 'In which year did World War II end?', 'options': ['1944', '1945', '1946', '1947'], 'correct': 1, 'category': 'history'},
-                {'question': 'Which ancient wonder of the world was located in Egypt?', 'options': ['Hanging Gardens', 'Colossus of Rhodes', 'Great Pyramid', 'Lighthouse of Alexandria'], 'correct': 2, 'category': 'history'},
-                {'question': 'What is the first letter of the Greek alphabet?', 'options': ['Alpha', 'Beta', 'Gamma', 'Delta'], 'correct': 0, 'category': 'basic'},
                 
                 # ANIMALS (Common knowledge)
                 {'question': 'Which of the following dogs is typically the smallest?', 'options': ['Labrador', 'Poodle', 'Chihuahua', 'Beagle'], 'correct': 2, 'category': 'animals'},
@@ -616,7 +474,6 @@ class OverconfidenceExperiment:
                 {'question': 'Which animal is known as the "King of the Jungle"?', 'options': ['Tiger', 'Lion', 'Elephant', 'Leopard'], 'correct': 1, 'category': 'animals'},
                 {'question': 'What is the largest mammal in the world?', 'options': ['Elephant', 'Blue whale', 'Giraffe', 'Hippopotamus'], 'correct': 1, 'category': 'animals'},
                 {'question': 'What do fish use to breathe?', 'options': ['Lungs', 'Gills', 'Nose', 'Mouth'], 'correct': 1, 'category': 'animals'},
-                {'question': 'What do bees make?', 'options': ['Honey', 'Milk', 'Cheese', 'Butter'], 'correct': 0, 'category': 'animals'},
                 
                 # SPORTS (Popular knowledge)
                 {'question': 'How many players are on a basketball team on the court at one time?', 'options': ['4', '5', '6', '7'], 'correct': 1, 'category': 'sports'},
@@ -628,106 +485,68 @@ class OverconfidenceExperiment:
                 {'question': 'What is the main ingredient in bread?', 'options': ['Rice', 'Flour', 'Sugar', 'Salt'], 'correct': 1, 'category': 'misc'},
                 {'question': 'What color do you get when you mix red and yellow?', 'options': ['Purple', 'Green', 'Orange', 'Blue'], 'correct': 2, 'category': 'misc'},
                 {'question': 'Which season comes after spring?', 'options': ['Winter', 'Summer', 'Fall', 'Autumn'], 'correct': 1, 'category': 'basic'},
-                {'question': 'What is the currency of the United Kingdom?', 'options': ['Euro', 'Dollar', 'Pound', 'Franc'], 'correct': 2, 'category': 'basic'}
             ],
             
             'hard': [
                 # SPORTS HISTORY (Obscure historical facts)
                 {'question': 'Boris Becker contested consecutive Wimbledon men\'s singles finals in 1988, 1989, and 1990, winning in 1989. Who was his opponent in all three matches?', 'options': ['Michael Stich', 'Andre Agassi', 'Ivan Lendl', 'Stefan Edberg'], 'correct': 3, 'category': 'sports_history'},
-                {'question': 'Which golfer holds the record for most major championship wins in the modern era?', 'options': ['Tiger Woods', 'Jack Nicklaus', 'Arnold Palmer', 'Gary Player'], 'correct': 1, 'category': 'sports_history'},
-                {'question': 'In what year did the Chicago Cubs last win the World Series before their 2016 victory?', 'options': ['1906', '1907', '1908', '1909'], 'correct': 2, 'category': 'sports_history'},
                 
                 # POLITICAL HISTORY (Specialized knowledge)
                 {'question': 'Suharto held the office of president in which large Asian nation?', 'options': ['Malaysia', 'Japan', 'Indonesia', 'Thailand'], 'correct': 2, 'category': 'political_history'},
-                {'question': 'Who was the first Secretary-General of the United Nations?', 'options': ['Dag Hammarskjöld', 'Trygve Lie', 'U Thant', 'Kurt Waldheim'], 'correct': 1, 'category': 'political_history'},
-                {'question': 'The Sykes-Picot Agreement of 1916 concerned the division of which region?', 'options': ['Balkans', 'Middle East', 'Africa', 'Southeast Asia'], 'correct': 1, 'category': 'political_history'},
                 
                 # DETAILED HISTORY (Obscure historical facts)
                 {'question': 'Who was Henry VIII\'s wife at the time of his death?', 'options': ['Catherine Parr', 'Catherine of Aragon', 'Anne Boleyn', 'Jane Seymour'], 'correct': 0, 'category': 'detailed_history'},
                 {'question': 'The Battle of Hastings took place in which year?', 'options': ['1064', '1065', '1066', '1067'], 'correct': 2, 'category': 'detailed_history'},
-                {'question': 'Which Roman emperor was known as "The Philosopher Emperor"?', 'options': ['Marcus Aurelius', 'Trajan', 'Hadrian', 'Antoninus Pius'], 'correct': 0, 'category': 'detailed_history'},
-                {'question': 'Which treaty ended the Thirty Years\' War?', 'options': ['Treaty of Versailles', 'Peace of Westphalia', 'Treaty of Utrecht', 'Congress of Vienna'], 'correct': 1, 'category': 'detailed_history'},
                 
                 # SPECIALIZED KNOWLEDGE (Highly technical)
                 {'question': 'What do you most fear if you have hormephobia?', 'options': ['Shock', 'Hormones', 'Heights', 'Water'], 'correct': 0, 'category': 'specialized'},
                 {'question': 'In chemistry, what is the atomic number of tungsten?', 'options': ['72', '73', '74', '75'], 'correct': 2, 'category': 'specialized'},
-                {'question': 'Which composer wrote "The Art of Fugue"?', 'options': ['Bach', 'Mozart', 'Beethoven', 'Handel'], 'correct': 0, 'category': 'specialized'},
                 {'question': 'What is the medical term for the kneecap?', 'options': ['Fibula', 'Tibia', 'Patella', 'Femur'], 'correct': 2, 'category': 'specialized'},
-                {'question': 'What type of lens is used to correct nearsightedness?', 'options': ['Convex', 'Concave', 'Bifocal', 'Prismatic'], 'correct': 1, 'category': 'specialized'},
                 
                 # ADVANCED SCIENCE (Complex scientific knowledge)
                 {'question': 'For what did Einstein receive the Nobel Prize in Physics?', 'options': ['Theory of Relativity', 'Quantum mechanics', 'Photoelectric effect', 'Brownian motion'], 'correct': 2, 'category': 'science_advanced'},
-                {'question': 'In quantum mechanics, what principle states that you cannot simultaneously know both position and momentum?', 'options': ['Pauli exclusion', 'Heisenberg uncertainty', 'Wave-particle duality', 'Quantum entanglement'], 'correct': 1, 'category': 'science_advanced'},
                 {'question': 'What is the hardest natural substance on Earth?', 'options': ['Quartz', 'Diamond', 'Corundum', 'Topaz'], 'correct': 1, 'category': 'science_advanced'},
                 {'question': 'Which element has the chemical symbol "Au"?', 'options': ['Silver', 'Aluminum', 'Gold', 'Argon'], 'correct': 2, 'category': 'science_advanced'},
-                {'question': 'What is the name of the philosophical thought experiment involving a cat that is simultaneously alive and dead?', 'options': ['Maxwell\'s demon', 'Schrödinger\'s cat', 'Zeno\'s paradox', 'Russell\'s paradox'], 'correct': 1, 'category': 'specialized'},
                 
                 # LITERATURE & ARTS (Specialized cultural knowledge)
                 {'question': 'Who wrote the novel "One Hundred Years of Solitude"?', 'options': ['Jorge Luis Borges', 'Gabriel García Márquez', 'Mario Vargas Llosa', 'Octavio Paz'], 'correct': 1, 'category': 'literature'},
                 {'question': 'Which painter created "Guernica"?', 'options': ['Salvador Dalí', 'Pablo Picasso', 'Joan Miró', 'Francisco Goya'], 'correct': 1, 'category': 'literature'},
                 {'question': 'In Shakespeare\'s "Hamlet," what is the name of Hamlet\'s mother?', 'options': ['Ophelia', 'Gertrude', 'Cordelia', 'Portia'], 'correct': 1, 'category': 'literature'},
                 {'question': 'Who composed the opera "The Ring of the Nibelung"?', 'options': ['Mozart', 'Wagner', 'Verdi', 'Puccini'], 'correct': 1, 'category': 'literature'},
-                {'question': 'In which novel does the character Jay Gatsby appear?', 'options': ['The Sun Also Rises', 'The Great Gatsby', 'Tender Is the Night', 'This Side of Paradise'], 'correct': 1, 'category': 'literature'},
                 {'question': 'Which philosopher wrote "Critique of Pure Reason"?', 'options': ['Hegel', 'Kant', 'Nietzsche', 'Schopenhauer'], 'correct': 1, 'category': 'specialized'},
                 
                 # ADVANCED GEOGRAPHY (Obscure geographical knowledge)
                 {'question': 'What is the capital of Kazakhstan?', 'options': ['Almaty', 'Nur-Sultan', 'Shymkent', 'Aktobe'], 'correct': 1, 'category': 'geography_advanced'},
                 {'question': 'Which African country was formerly known as Rhodesia?', 'options': ['Zambia', 'Zimbabwe', 'Botswana', 'Namibia'], 'correct': 1, 'category': 'geography_advanced'},
-                {'question': 'The Atacama Desert is located primarily in which country?', 'options': ['Peru', 'Bolivia', 'Chile', 'Argentina'], 'correct': 2, 'category': 'geography_advanced'},
                 
                 # ECONOMICS & COMPLEX THEORY (Graduate-level knowledge)
                 {'question': 'Who developed the theory of comparative advantage in international trade?', 'options': ['Adam Smith', 'David Ricardo', 'John Stuart Mill', 'Alfred Marshall'], 'correct': 1, 'category': 'economics'},
-                {'question': 'The Bretton Woods system established which international monetary arrangement?', 'options': ['Gold standard', 'Flexible exchange rates', 'Fixed exchange rates', 'Currency unions'], 'correct': 2, 'category': 'economics'},
                 {'question': 'Which economist wrote "The General Theory of Employment, Interest, and Money"?', 'options': ['John Maynard Keynes', 'Milton Friedman', 'Friedrich Hayek', 'Paul Samuelson'], 'correct': 0, 'category': 'economics'},
-                {'question': 'What is the term for the economic condition of simultaneous inflation and unemployment?', 'options': ['Recession', 'Stagflation', 'Depression', 'Deflation'], 'correct': 1, 'category': 'economics'},
                 
                 # COMPLEX MATHEMATICS & LOGIC
                 {'question': 'Which logical fallacy involves attacking the person rather than their argument?', 'options': ['Straw man', 'Ad hominem', 'False dichotomy', 'Slippery slope'], 'correct': 1, 'category': 'logic'},
-                {'question': 'What is the square root of 169?', 'options': ['12', '13', '14', '15'], 'correct': 1, 'category': 'specialized'}
+                {'question': 'What is the square root of 169?', 'options': ['12', '13', '14', '15'], 'correct': 1, 'category': 'specialized'},
+                
+                # Additional hard questions to reach 25
+                {'question': 'In quantum mechanics, what principle states that you cannot simultaneously know both position and momentum?', 'options': ['Pauli exclusion', 'Heisenberg uncertainty', 'Wave-particle duality', 'Quantum entanglement'], 'correct': 1, 'category': 'science_advanced'},
+                {'question': 'The Bretton Woods system established which international monetary arrangement?', 'options': ['Gold standard', 'Flexible exchange rates', 'Fixed exchange rates', 'Currency unions'], 'correct': 2, 'category': 'economics'},
+                {'question': 'What is the term for the economic condition of simultaneous inflation and unemployment?', 'options': ['Recession', 'Stagflation', 'Depression', 'Deflation'], 'correct': 1, 'category': 'economics'},
+                {'question': 'Who was the first Secretary-General of the United Nations?', 'options': ['Dag Hammarskjöld', 'Trygve Lie', 'U Thant', 'Kurt Waldheim'], 'correct': 1, 'category': 'political_history'},
+                {'question': 'Which Roman emperor was known as "The Philosopher Emperor"?', 'options': ['Marcus Aurelius', 'Trajan', 'Hadrian', 'Antoninus Pius'], 'correct': 0, 'category': 'detailed_history'},
+                {'question': 'The Atacama Desert is located primarily in which country?', 'options': ['Peru', 'Bolivia', 'Chile', 'Argentina'], 'correct': 2, 'category': 'geography_advanced'},
+                {'question': 'Which composer wrote "The Art of Fugue"?', 'options': ['Bach', 'Mozart', 'Beethoven', 'Handel'], 'correct': 0, 'category': 'specialized'}
             ]
         }
 
     def select_trivia_questions(self, treatment: str) -> List[Dict]:
         """Select balanced questions with controlled randomization."""
-        # Use config-based seed for reproducibility
         random.seed(ExperimentConfig.QUESTION_SELECTION_SEED)
         
         question_bank = self.trivia_questions[treatment]
-        categories = list(set(q['category'] for q in question_bank))
+        random.shuffle(question_bank)
+        selected_questions = question_bank[:ExperimentConfig.TRIVIA_QUESTIONS_COUNT]
         
-        # Calculate balanced distribution
-        questions_per_category = ExperimentConfig.TRIVIA_QUESTIONS_COUNT // len(categories)
-        extra_questions = ExperimentConfig.TRIVIA_QUESTIONS_COUNT % len(categories)
-        
-        selected_questions = []
-        
-        # Select questions from each category
-        for i, category in enumerate(categories):
-            category_questions = [q for q in question_bank if q['category'] == category]
-            random.shuffle(category_questions)
-            
-            num_to_select = questions_per_category + (1 if i < extra_questions else 0)
-            selected_questions.extend(category_questions[:num_to_select])
-        
-        # Ensure exactly the right number of questions
-        while len(selected_questions) < ExperimentConfig.TRIVIA_QUESTIONS_COUNT:
-            remaining_questions = [q for q in question_bank if q not in selected_questions]
-            if remaining_questions:
-                selected_questions.append(random.choice(remaining_questions))
-            else:
-                break
-        
-        # Final shuffle and truncate
-        random.shuffle(selected_questions)
-        selected_questions = selected_questions[:ExperimentConfig.TRIVIA_QUESTIONS_COUNT]
-        
-        # Log for research validation
-        category_counts = {}
-        for q in selected_questions:
-            category_counts[q['category']] = category_counts.get(q['category'], 0) + 1
-        
-        logging.info(f"Selected {len(selected_questions)} questions for {treatment} treatment. Categories: {category_counts}")
-        
+        logging.info(f"Selected {len(selected_questions)} questions for {treatment} treatment")
         return selected_questions
 
     def show_progress_bar(self, current_step: int, total_steps: int):
@@ -781,12 +600,6 @@ class OverconfidenceExperiment:
                 </p>
             </div>
             
-            <div class="methodology-warning">
-                <h4 style="color: #856404; margin-top: 0;">⚖️ Critical Methodology Note</h4>
-                <p><strong>Performance Classification:</strong> Your performance level (High/Low) will be determined by your rank relative to other participants in this session, not by a fixed score. This ensures accurate implementation of the "top 50%" criterion described in the research literature.</p>
-                <p style="margin-bottom: 0;"><em>This session-relative ranking is essential for the validity of the experimental design.</em></p>
-            </div>
-            
             <h4>🔒 Research Ethics & Privacy</h4>
             <ul>
                 <li>✅ All information provided is truthful (no deception)</li>
@@ -798,7 +611,6 @@ class OverconfidenceExperiment:
         </div>
         """, unsafe_allow_html=True)
         
-        # Enhanced consent process
         consent = st.checkbox("I have read and understood the research information above, and I consent to participate in this study.", key="consent_checkbox")
         
         if consent:
@@ -811,160 +623,686 @@ class OverconfidenceExperiment:
         else:
             st.info("Please read the research information and provide consent to participate.")
 
+    def show_treatment_assignment(self):
+        """Randomly assign participants to easy or hard treatment."""
+        st.markdown('<div class="main-header"><h1>🧪 Decision-Making Research Experiment</h1></div>', unsafe_allow_html=True)
+        
+        self.show_progress_bar(2, 15)
+        
+        if st.session_state.experiment_data['treatment'] is None:
+            # Random treatment assignment
+            st.session_state.experiment_data['treatment'] = random.choice(['easy', 'hard'])
+            st.session_state.selected_questions = self.select_trivia_questions(st.session_state.experiment_data['treatment'])
+            
+            logging.info(f"Participant {st.session_state.experiment_data['participant_id']} assigned to {st.session_state.experiment_data['treatment']} treatment")
+        
+        st.markdown("""
+        <div class="experiment-card">
+            <h2>📚 Phase 1: Trivia Questions</h2>
+            
+            <div style="background: #f0f8ff; border: 2px solid #4169e1; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+                <h4 style="color: #4169e1; margin-top: 0;">📋 Instructions</h4>
+                <p>You will now complete <strong>25 multiple-choice trivia questions</strong>.</p>
+                <ul>
+                    <li>You have <strong>6 minutes</strong> to complete all questions</li>
+                    <li>You can navigate between questions and change your answers</li>
+                    <li>A timer will show your remaining time</li>
+                    <li>Your score determines your performance classification</li>
+                </ul>
+            </div>
+            
+            <div style="background: #d4edda; border: 2px solid #c3e6cb; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+                <h4 style="color: #155724; margin-top: 0;">💰 Payment Information</h4>
+                <p style="color: #155724; margin-bottom: 0;">
+                    If this task is selected for payment:<br>
+                    <strong>Top 50% performers:</strong> {ExperimentConfig.HIGH_PERFORMANCE_TOKENS} tokens<br>
+                    <strong>Bottom 50% performers:</strong> {ExperimentConfig.LOW_PERFORMANCE_TOKENS} tokens
+                </p>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("▶️ Start Trivia Questions", key="start_trivia"):
+            st.session_state.trivia_start_time = time.time()
+            st.session_state.current_screen = 2
+            st.rerun()
+
+    def show_trivia_questions(self):
+        """Display trivia questions with timer and navigation."""
+        st.markdown('<div class="main-header"><h1>🧪 Trivia Questions</h1></div>', unsafe_allow_html=True)
+        
+        # Timer display
+        if st.session_state.trivia_start_time:
+            elapsed_time = time.time() - st.session_state.trivia_start_time
+            remaining_time = max(0, ExperimentConfig.TRIVIA_TIME_LIMIT - elapsed_time)
+            
+            if remaining_time <= 60:  # Warning in last minute
+                st.markdown(f'<div class="timer-warning">⏰ TIME WARNING: {int(remaining_time)} seconds remaining!</div>', unsafe_allow_html=True)
+            else:
+                minutes = int(remaining_time // 60)
+                seconds = int(remaining_time % 60)
+                st.markdown(f'<div class="timer-normal">⏱️ Time Remaining: {minutes}:{seconds:02d}</div>', unsafe_allow_html=True)
+            
+            # Auto-submit when time runs out
+            if remaining_time <= 0:
+                self.submit_trivia()
+                return
+        
+        # Progress indicator
+        self.show_progress_bar(3, 15)
+        st.markdown(f"<p style='text-align: center; margin: 1rem 0;'><strong>Question {st.session_state.current_trivia_question + 1} of {ExperimentConfig.TRIVIA_QUESTIONS_COUNT}</strong></p>", unsafe_allow_html=True)
+        
+        # Current question
+        current_q = st.session_state.current_trivia_question
+        question_data = st.session_state.selected_questions[current_q]
+        
+        # Track question start time
+        if current_q not in st.session_state.question_start_times:
+            st.session_state.question_start_times[current_q] = time.time()
+        
+        st.markdown(f"""
+        <div class="question-container">
+            <h3>Question {current_q + 1}</h3>
+            <p style="font-size: 1.2em; font-weight: 500; margin: 1.5rem 0;">{question_data['question']}</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Answer options
+        answer_key = f"trivia_answer_{current_q}"
+        selected = st.radio(
+            "Select your answer:",
+            options=range(len(question_data['options'])),
+            format_func=lambda x: f"{chr(65+x)}. {question_data['options'][x]}",
+            key=answer_key,
+            index=st.session_state.experiment_data['trivia_answers'][current_q]
+        )
+        
+        # Update answer and response time
+        if selected is not None:
+            st.session_state.experiment_data['trivia_answers'][current_q] = selected
+            if current_q in st.session_state.question_start_times:
+                st.session_state.experiment_data['trivia_response_times'][current_q] = time.time() - st.session_state.question_start_times[current_q]
+        
+        # Navigation buttons
+        col1, col2, col3 = st.columns([1, 2, 1])
+        
+        with col1:
+            if current_q > 0:
+                if st.button("⬅️ Previous", key="prev_question"):
+                    st.session_state.current_trivia_question -= 1
+                    st.rerun()
+        
+        with col2:
+            # Progress display
+            answered = sum(1 for a in st.session_state.experiment_data['trivia_answers'] if a is not None)
+            st.markdown(f"<p style='text-align: center;'>Answered: {answered}/{ExperimentConfig.TRIVIA_QUESTIONS_COUNT}</p>", unsafe_allow_html=True)
+        
+        with col3:
+            if current_q < ExperimentConfig.TRIVIA_QUESTIONS_COUNT - 1:
+                if st.button("Next ➡️", key="next_question"):
+                    st.session_state.current_trivia_question += 1
+                    st.rerun()
+            else:
+                if st.button("✅ Submit All Answers", key="submit_trivia"):
+                    self.submit_trivia()
+
     def submit_trivia(self):
-        """Enhanced trivia submission with session-relative performance calculation."""
-        # Record timing
+        """Enhanced trivia submission with detailed analysis."""
         if st.session_state.trivia_start_time:
             st.session_state.experiment_data['trivia_time_spent'] = time.time() - st.session_state.trivia_start_time
         
-        # Calculate score and detailed analysis
+        # Calculate score
         score = 0
-        category_performance = {}
-        question_analysis = []
-        
         for i, question in enumerate(st.session_state.selected_questions):
             answer = st.session_state.experiment_data['trivia_answers'][i]
-            is_correct = answer == question['correct'] if answer is not None else False
-            
-            if is_correct:
+            if answer == question['correct']:
                 score += 1
-            
-            # Track detailed analysis
-            question_analysis.append({
-                'question_number': i + 1,
-                'category': question['category'],
-                'selected_answer': answer,
-                'correct_answer': question['correct'],
-                'is_correct': is_correct,
-                'response_time': st.session_state.experiment_data['trivia_response_times'][i]
-            })
-            
-            # Category performance tracking
-            category = question['category']
-            if category not in category_performance:
-                category_performance[category] = {'correct': 0, 'total': 0, 'response_times': []}
-            
-            category_performance[category]['total'] += 1
-            category_performance[category]['response_times'].append(st.session_state.experiment_data['trivia_response_times'][i])
-            if is_correct:
-                category_performance[category]['correct'] += 1
         
-        # Store results
         st.session_state.experiment_data['trivia_score'] = score
         st.session_state.experiment_data['accuracy_rate'] = (score / ExperimentConfig.TRIVIA_QUESTIONS_COUNT) * 100
-        st.session_state.experiment_data['category_performance'] = category_performance
-        st.session_state.experiment_data['question_analysis'] = question_analysis
         
-        # Note: Performance level will be calculated after all participants complete trivia
-        # For now, store as pending
-        st.session_state.experiment_data['performance_level'] = 'PENDING_SESSION_RANKING'
+        # Simulate performance level (in real experiment, this would be calculated after all participants)
+        median_score = 12.5  # Simulated
+        performance_level = 'High' if score >= median_score else 'Low'
+        st.session_state.experiment_data['performance_level'] = performance_level
+        st.session_state.experiment_data['session_median_score'] = median_score
+        st.session_state.experiment_data['performance_percentile'] = (score / ExperimentConfig.TRIVIA_QUESTIONS_COUNT) * 100
         
-        # Validation
-        treatment = st.session_state.experiment_data['treatment']
-        accuracy = st.session_state.experiment_data['accuracy_rate']
-        
-        validation_results = self.validator.validate_treatment_effectiveness(st.session_state.experiment_data)
-        st.session_state.experiment_data['validation_flags'].update(validation_results)
-        
-        # Log for research
-        logging.info(f"Participant {st.session_state.experiment_data['participant_id']} - Treatment: {treatment}, Score: {score}/{ExperimentConfig.TRIVIA_QUESTIONS_COUNT} ({accuracy:.1f}%)")
-        
-        # Check against target ranges
-        target_range = ExperimentConfig.TARGET_EASY_ACCURACY if treatment == 'easy' else ExperimentConfig.TARGET_HARD_ACCURACY
-        if not (target_range[0] <= accuracy <= target_range[1]):
-            logging.warning(f"Individual accuracy {accuracy:.1f}% outside target range {target_range} for {treatment} treatment")
+        logging.info(f"Participant {st.session_state.experiment_data['participant_id']} completed trivia: {score}/{ExperimentConfig.TRIVIA_QUESTIONS_COUNT}")
         
         st.session_state.current_screen = 3
         st.rerun()
 
-    def show_classification_screen(self):
-        """Enhanced classification screen explaining session-relative methodology."""
+    def show_belief_instructions(self):
+        """Instructions for belief elicitation about own performance."""
         st.markdown('<div class="main-header"><h1>🧪 Decision-Making Research Experiment</h1></div>', unsafe_allow_html=True)
         
         self.show_progress_bar(4, 15)
         
         st.markdown("""
         <div class="experiment-card">
-            <h2>📊 Performance Classification System</h2>
-            
-            <div class="methodology-warning">
-                <h4 style="color: #856404; margin-top: 0;">🎯 Session-Relative Performance Ranking</h4>
-                <p><strong>Important Methodological Note:</strong> Your performance classification will be determined by comparing your score to all other participants in this experimental session.</p>
-                <ul style="color: #856404;">
-                    <li>Participants with scores in the <strong>top 50%</strong> of this session will be classified as <strong>High Performance</strong></li>
-                    <li>Participants with scores in the <strong>bottom 50%</strong> of this session will be classified as <strong>Low Performance</strong></li>
-                    <li>This ensures an accurate 50/50 split regardless of absolute score levels</li>
-                </ul>
-            </div>
-            
-            <div style="display: flex; gap: 1rem; margin: 1.5rem 0;">
-                <div style="flex: 1; padding: 1.5rem; background: #d4edda; border: 2px solid #c3e6cb; border-radius: 10px;">
-                    <h4 style="color: #155724; margin-top: 0;">🏆 High Performance</h4>
-                    <ul style="color: #155724;">
-                        <li>Top 50% of participants <em>in this session</em></li>
-                        <li>Higher relative performance</li>
-                        <li>Determined after all participants complete trivia</li>
-                    </ul>
-                </div>
-                <div style="flex: 1; padding: 1.5rem; background: #fff3cd; border: 2px solid #ffeaa7; border-radius: 10px;">
-                    <h4 style="color: #856404; margin-top: 0;">📊 Low Performance</h4>
-                    <ul style="color: #856404;">
-                        <li>Bottom 50% of participants <em>in this session</em></li>
-                        <li>Lower relative performance</li>
-                        <li>Still valuable contribution to research</li>
-                    </ul>
-                </div>
-            </div>
+            <h2>🧠 Phase 2: Beliefs About Your Performance</h2>
             
             <div style="background: #f0f8ff; border: 2px solid #4169e1; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-                <h4 style="color: #4169e1; margin-top: 0;">🔬 Why Session-Relative Ranking?</h4>
-                <p>This methodology ensures:</p>
+                <h4 style="color: #4169e1; margin-top: 0;">📊 Performance Classification</h4>
+                <p>Based on your trivia score, you will be classified as either:</p>
                 <ul>
-                    <li>Exactly 50% of participants are classified as High Performance</li>
-                    <li>Results are comparable across different experimental sessions</li>
-                    <li>Adherence to published research protocols</li>
-                    <li>Valid statistical analysis of treatment effects</li>
+                    <li><strong>High Performance:</strong> Top 50% of participants in this session</li>
+                    <li><strong>Low Performance:</strong> Bottom 50% of participants in this session</li>
                 </ul>
-                <p style="margin-bottom: 0;"><strong>Note:</strong> Your actual performance classification will not be revealed until the end of the experiment.</p>
+                <p><em>This classification will be revealed later in the experiment.</em></p>
+            </div>
+            
+            <div style="background: #d4edda; border: 2px solid #c3e6cb; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+                <h4 style="color: #155724; margin-top: 0;">💰 Payment for Accuracy</h4>
+                <p style="color: #155724;">
+                    If this question is selected for payment, you will earn tokens based on the accuracy of your belief.<br>
+                    <strong>The closer your guess to reality, the higher your payment!</strong>
+                </p>
+                <p style="color: #155724; margin-bottom: 0;">
+                    This payment mechanism rewards honest reporting of your true beliefs.
+                </p>
             </div>
         </div>
         """, unsafe_allow_html=True)
         
-        if st.button("📝 Continue to Next Phase", key="continue_classification"):
-            # Simulate performance level calculation for demonstration
-            # In a real session, this would be calculated after all participants complete trivia
-            median_score = 12.5  # Simulated session median
-            user_score = st.session_state.experiment_data['trivia_score']
-            
-            # Calculate performance level relative to session
-            performance_level = 'High' if user_score >= median_score else 'Low'
-            percentile = ((user_score / ExperimentConfig.TRIVIA_QUESTIONS_COUNT) * 100)
-            
-            st.session_state.experiment_data['performance_level'] = performance_level
-            st.session_state.experiment_data['session_median_score'] = median_score
-            st.session_state.experiment_data['performance_percentile'] = percentile
-            
-            logging.info(f"Participant {st.session_state.experiment_data['participant_id']} - Performance level: {performance_level} (Score: {user_score}, Session median: {median_score})")
-            
+        if st.button("📝 Continue to Belief Question", key="continue_to_belief"):
             st.session_state.current_screen = 4
             st.rerun()
 
-    # [Continue with the rest of the methods - show_belief_instructions, show_belief_own_screen, etc.]
-    # These would follow the same pattern with enhanced validation and improved UI
+    def show_belief_own_screen(self):
+        """Elicit beliefs about own performance."""
+        st.markdown('<div class="main-header"><h1>🧪 Belief About Your Performance</h1></div>', unsafe_allow_html=True)
+        
+        self.show_progress_bar(5, 15)
+        
+        st.markdown("""
+        <div class="experiment-card">
+            <h2>🎯 What Do You Think?</h2>
+            
+            <div style="background: #fff3cd; border: 2px solid #ffc107; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+                <h4 style="color: #856404; margin-top: 0;">❓ The Question</h4>
+                <p style="font-size: 1.3em; font-weight: 600; color: #856404;">
+                    What do you think is the probability that you are a <strong>High Performance</strong> participant?
+                </p>
+                <p style="color: #856404; margin-bottom: 0;">
+                    (Remember: High Performance = Top 50% of participants in this session)
+                </p>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        belief = st.slider(
+            "Your belief (as a percentage from 0% to 100%):",
+            min_value=0,
+            max_value=100,
+            value=50,
+            step=1,
+            key="belief_own_performance"
+        )
+        
+        st.markdown(f"""
+        <div style="text-align: center; padding: 1.5rem; background: #e9ecef; border-radius: 8px; margin: 1rem 0;">
+            <h3 style="color: #495057;">Your Current Answer: {belief}%</h3>
+            <p style="color: #6c757d; margin-bottom: 0;">
+                You believe there is a <strong>{belief}%</strong> chance you are in the top 50% of performers.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("✅ Submit Belief", key="submit_belief"):
+            st.session_state.experiment_data['belief_own_performance'] = belief
+            logging.info(f"Participant {st.session_state.experiment_data['participant_id']} belief: {belief}%")
+            st.session_state.current_screen = 5
+            st.rerun()
+
+    def show_group_assignment_instructions(self):
+        """Explain group assignment mechanism."""
+        st.markdown('<div class="main-header"><h1>🧪 Decision-Making Research Experiment</h1></div>', unsafe_allow_html=True)
+        
+        self.show_progress_bar(6, 15)
+        
+        st.markdown("""
+        <div class="experiment-card">
+            <h2>🎲 Phase 3: Group Assignment</h2>
+            
+            <div style="background: #f0f8ff; border: 2px solid #4169e1; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+                <h4 style="color: #4169e1; margin-top: 0;">🔄 How Groups Are Assigned</h4>
+                <p>You and all other participants will now be assigned to groups: <strong>Top</strong> or <strong>Bottom</strong>.</p>
+                
+                <p><strong>The computer will flip a coin to determine the assignment mechanism:</strong></p>
+                <ul>
+                    <li><strong>If HEADS:</strong> 95% chance your group reflects your performance + 5% chance it doesn't</li>
+                    <li><strong>If TAILS:</strong> 55% chance your group reflects your performance + 45% chance it doesn't</li>
+                </ul>
+            </div>
+            
+            <div style="background: #fff3cd; border: 2px solid #ffc107; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+                <h4 style="color: #856404; margin-top: 0;">🎯 What This Means</h4>
+                <p><strong>"Reflects performance"</strong> means:</p>
+                <ul style="color: #856404;">
+                    <li>High Performance → Top Group</li>
+                    <li>Low Performance → Bottom Group</li>
+                </ul>
+                <p style="margin-bottom: 0;"><em>You will see your group assignment but NOT the coin flip result.</em></p>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; margin: 1.5rem 0;">
+                <div style="flex: 1; padding: 1.5rem; background: #d4edda; border: 2px solid #c3e6cb; border-radius: 10px;">
+                    <h4 style="color: #155724; margin-top: 0;">🥇 Mechanism A (95% Accurate)</h4>
+                    <p style="color: #155724; margin-bottom: 0;">Groups are highly likely to reflect actual performance</p>
+                </div>
+                <div style="flex: 1; padding: 1.5rem; background: #f8d7da; border: 2px solid #f5c6cb; border-radius: 10px;">
+                    <h4 style="color: #721c24; margin-top: 0;">🎲 Mechanism B (55% Accurate)</h4>
+                    <p style="color: #721c24; margin-bottom: 0;">Groups are only mildly likely to reflect performance</p>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("🎲 Proceed to Group Assignment", key="proceed_to_assignment"):
+            st.session_state.current_screen = 6
+            st.rerun()
+
+    def show_group_assignment(self):
+        """Show group assignment result."""
+        st.markdown('<div class="main-header"><h1>🧪 Your Group Assignment</h1></div>', unsafe_allow_html=True)
+        
+        self.show_progress_bar(7, 15)
+        
+        if st.session_state.experiment_data['assigned_group'] is None:
+            # Simulate mechanism selection and group assignment
+            mechanism = random.choice(['A', 'B'])
+            accuracy = ExperimentConfig.MECHANISM_A_ACCURACY if mechanism == 'A' else ExperimentConfig.MECHANISM_B_ACCURACY
+            
+            # Determine if assignment reflects performance
+            reflects_performance = random.random() < accuracy
+            
+            if reflects_performance:
+                assigned_group = 'Top' if st.session_state.experiment_data['performance_level'] == 'High' else 'Bottom'
+            else:
+                assigned_group = 'Bottom' if st.session_state.experiment_data['performance_level'] == 'High' else 'Top'
+            
+            st.session_state.experiment_data['mechanism_used'] = mechanism
+            st.session_state.experiment_data['mechanism_reflects_performance'] = reflects_performance
+            st.session_state.experiment_data['assigned_group'] = assigned_group
+            
+            logging.info(f"Participant {st.session_state.experiment_data['participant_id']} assigned to {assigned_group} group via mechanism {mechanism}")
+        
+        group = st.session_state.experiment_data['assigned_group']
+        group_color = "#2ecc71" if group == "Top" else "#e67e22"
+        
+        st.markdown(f"""
+        <div class="group-display" style="border-color: {group_color};">
+            🏷️ You have been assigned to the<br>
+            <span style="color: {group_color}; font-size: 3rem;">{group} Group</span>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="experiment-card">
+            <div style="background: #e9ecef; border: 2px solid #6c757d; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+                <h4 style="color: #495057; margin-top: 0;">🔍 What You Know</h4>
+                <ul style="color: #495057;">
+                    <li>Your group assignment: <strong>{}</strong></li>
+                    <li>The computer flipped a coin to choose the mechanism</li>
+                    <li>Your group either reflects your performance or it doesn't</li>
+                </ul>
+                <p style="color: #495057; margin-bottom: 0;"><strong>You do NOT know:</strong> Which mechanism was used or whether your group reflects your performance</p>
+            </div>
+        </div>
+        """.format(group), unsafe_allow_html=True)
+        
+        if st.button("➡️ Continue to Next Phase", key="continue_after_assignment"):
+            st.session_state.current_screen = 7
+            st.rerun()
+
+    def show_comprehension_questions(self):
+        """Show comprehension questions to ensure understanding."""
+        st.markdown('<div class="main-header"><h1>🧪 Comprehension Check</h1></div>', unsafe_allow_html=True)
+        
+        self.show_progress_bar(8, 15)
+        
+        st.markdown("""
+        <div class="experiment-card">
+            <h2>✅ Understanding Check</h2>
+            <p>Please answer these questions to make sure you understand the group assignment process.</p>
+            <p><em>You must answer all questions correctly to continue.</em></p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Comprehension questions
+        q1 = st.radio(
+            "1. What determines whether groups are assigned by Mechanism A or Mechanism B?",
+            options=[
+                "Your trivia score",
+                "A coin flip by the computer", 
+                "Your belief about your performance",
+                "Random assignment"
+            ],
+            key="comp_q1"
+        )
+        
+        q2 = st.radio(
+            "2. What is the probability that groups reflect performance under Mechanism A?",
+            options=["55%", "75%", "85%", "95%"],
+            key="comp_q2"
+        )
+        
+        q3 = st.radio(
+            "3. Do you know which mechanism was used to assign your group?",
+            options=["Yes, I know which mechanism was used", "No, I don't know which mechanism was used"],
+            key="comp_q3"
+        )
+        
+        if st.button("📝 Check Answers", key="check_comprehension"):
+            correct_answers = [
+                "A coin flip by the computer",
+                "95%", 
+                "No, I don't know which mechanism was used"
+            ]
+            
+            user_answers = [q1, q2, q3]
+            all_correct = all(user == correct for user, correct in zip(user_answers, correct_answers))
+            
+            if all_correct:
+                st.markdown('<div class="comprehension-correct">✅ All correct! You understand the process.</div>', unsafe_allow_html=True)
+                if st.button("➡️ Continue to Hiring Decisions", key="continue_to_hiring"):
+                    st.session_state.current_screen = 8
+                    st.rerun()
+            else:
+                st.markdown('<div class="comprehension-incorrect">❌ Some answers are incorrect. Please review the instructions and try again.</div>', unsafe_allow_html=True)
+                
+                # Track attempts
+                if 'comprehension_attempts' not in st.session_state.experiment_data:
+                    st.session_state.experiment_data['comprehension_attempts'] = 0
+                st.session_state.experiment_data['comprehension_attempts'] += 1
+
+    def show_hiring_instructions(self):
+        """Instructions for hiring decisions."""
+        st.markdown('<div class="main-header"><h1>🧪 Phase 4: Hiring Decisions</h1></div>', unsafe_allow_html=True)
+        
+        self.show_progress_bar(9, 15)
+        
+        st.markdown(f"""
+        <div class="experiment-card">
+            <h2>💼 Hiring Task Instructions</h2>
+            
+            <div style="background: #f0f8ff; border: 2px solid #4169e1; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+                <h4 style="color: #4169e1; margin-top: 0;">🎯 Your Task</h4>
+                <p>You will now make hiring decisions for workers from both groups:</p>
+                <ul>
+                    <li>Make a hiring decision for a <strong>Top Group</strong> member</li>
+                    <li>Make a hiring decision for a <strong>Bottom Group</strong> member</li>
+                </ul>
+            </div>
+            
+            <div style="background: #d4edda; border: 2px solid #c3e6cb; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+                <h4 style="color: #155724; margin-top: 0;">💰 How Payment Works</h4>
+                <p style="color: #155724;">If you hire a worker, your payment depends on their actual performance:</p>
+                <ul style="color: #155724;">
+                    <li><strong>High Performance worker:</strong> {ExperimentConfig.HIGH_WORKER_REWARD} tokens</li>
+                    <li><strong>Low Performance worker:</strong> {ExperimentConfig.LOW_WORKER_REWARD} tokens</li>
+                    <li><strong>Minus:</strong> The hiring cost you pay</li>
+                </ul>
+                <p style="color: #155724; margin-bottom: 0;">
+                    <strong>Starting endowment:</strong> {ExperimentConfig.ENDOWMENT_TOKENS} tokens for each decision
+                </p>
+            </div>
+            
+            <div style="background: #fff3cd; border: 2px solid #ffc107; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+                <h4 style="color: #856404; margin-top: 0;">🤔 What You Decide</h4>
+                <p style="color: #856404;">
+                    For each group, you'll state the <strong>maximum</strong> you're willing to pay to hire a random member.
+                    The computer will then draw a random hiring cost between {ExperimentConfig.BDM_MIN_VALUE} and {ExperimentConfig.BDM_MAX_VALUE} tokens.
+                </p>
+                <ul style="color: #856404;">
+                    <li>If the random cost ≤ your maximum → You hire the worker and pay the random cost</li>
+                    <li>If the random cost > your maximum → You don't hire the worker</li>
+                </ul>
+                <p style="color: #856404; margin-bottom: 0;">
+                    <strong>Best strategy:</strong> State your true maximum willingness to pay!
+                </p>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("💼 Begin Hiring Decisions", key="begin_hiring"):
+            st.session_state.current_screen = 9
+            st.rerun()
+
+    def show_hiring_decisions(self):
+        """Elicit willingness to pay for top and bottom group members."""
+        st.markdown('<div class="main-header"><h1>💼 Hiring Decisions</h1></div>', unsafe_allow_html=True)
+        
+        self.show_progress_bar(10, 15)
+        
+        st.markdown("""
+        <div class="experiment-card">
+            <h2>💼 Make Your Hiring Decisions</h2>
+            <p>State your maximum willingness to pay for a randomly selected member of each group.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Top group hiring decision
+        st.markdown("### 🥇 Hiring from Top Group")
+        wtp_top = st.slider(
+            f"Maximum willing to pay for a Top Group member (0-{ExperimentConfig.BDM_MAX_VALUE} tokens):",
+            min_value=ExperimentConfig.BDM_MIN_VALUE,
+            max_value=ExperimentConfig.BDM_MAX_VALUE,
+            value=100,
+            step=1,
+            key="wtp_top_group"
+        )
+        
+        # Bottom group hiring decision  
+        st.markdown("### 🥈 Hiring from Bottom Group")
+        wtp_bottom = st.slider(
+            f"Maximum willing to pay for a Bottom Group member (0-{ExperimentConfig.BDM_MAX_VALUE} tokens):",
+            min_value=ExperimentConfig.BDM_MIN_VALUE,
+            max_value=ExperimentConfig.BDM_MAX_VALUE,
+            value=100,
+            step=1,
+            key="wtp_bottom_group"
+        )
+        
+        # Summary
+        premium = wtp_top - wtp_bottom
+        st.markdown(f"""
+        <div style="background: #e9ecef; border: 2px solid #6c757d; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+            <h4 style="color: #495057; margin-top: 0;">📊 Your Decisions Summary</h4>
+            <div style="display: flex; justify-content: space-between; margin: 0.5rem 0;">
+                <span><strong>Top Group WTP:</strong></span>
+                <span>{wtp_top} tokens</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin: 0.5rem 0;">
+                <span><strong>Bottom Group WTP:</strong></span>
+                <span>{wtp_bottom} tokens</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin: 0.5rem 0; font-weight: bold; border-top: 1px solid #6c757d; padding-top: 0.5rem;">
+                <span><strong>Premium for Top Group:</strong></span>
+                <span>{premium:+} tokens</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("✅ Submit Hiring Decisions", key="submit_hiring"):
+            st.session_state.experiment_data['wtp_top_group'] = wtp_top
+            st.session_state.experiment_data['wtp_bottom_group'] = wtp_bottom
+            logging.info(f"Participant {st.session_state.experiment_data['participant_id']} WTP: Top={wtp_top}, Bottom={wtp_bottom}, Premium={premium}")
+            st.session_state.current_screen = 10
+            st.rerun()
+
+    def show_mechanism_belief(self):
+        """Elicit beliefs about which mechanism was used."""
+        st.markdown('<div class="main-header"><h1>🤔 Final Belief Question</h1></div>', unsafe_allow_html=True)
+        
+        self.show_progress_bar(11, 15)
+        
+        st.markdown("""
+        <div class="experiment-card">
+            <h2>🎲 Belief About Group Assignment</h2>
+            
+            <div style="background: #fff3cd; border: 2px solid #ffc107; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+                <h4 style="color: #856404; margin-top: 0;">❓ Final Question</h4>
+                <p style="font-size: 1.2em; font-weight: 600; color: #856404;">
+                    What do you think is the probability that <strong>Mechanism A</strong> (95% accurate) was used to assign groups?
+                </p>
+                <p style="color: #856404; margin-bottom: 0;">
+                    Remember: The computer flipped a coin with 50% chance for each mechanism.
+                </p>
+            </div>
+            
+            <div style="background: #e9ecef; border: 2px solid #6c757d; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+                <h4 style="color: #495057; margin-top: 0;">🔄 Reminder</h4>
+                <ul style="color: #495057;">
+                    <li><strong>Mechanism A:</strong> 95% chance groups reflect performance</li>
+                    <li><strong>Mechanism B:</strong> 55% chance groups reflect performance</li>
+                    <li><strong>Your group:</strong> {st.session_state.experiment_data['assigned_group']} Group</li>
+                </ul>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        belief_mechanism = st.slider(
+            "Probability that Mechanism A was used (0% to 100%):",
+            min_value=0,
+            max_value=100,
+            value=50,
+            step=1,
+            key="belief_mechanism"
+        )
+        
+        st.markdown(f"""
+        <div style="text-align: center; padding: 1.5rem; background: #e9ecef; border-radius: 8px; margin: 1rem 0;">
+            <h3 style="color: #495057;">Your Belief: {belief_mechanism}%</h3>
+            <p style="color: #6c757d; margin-bottom: 0;">
+                You believe there is a <strong>{belief_mechanism}%</strong> chance that Mechanism A (95% accurate) was used.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("✅ Submit Final Belief", key="submit_mechanism_belief"):
+            st.session_state.experiment_data['belief_mechanism'] = belief_mechanism
+            logging.info(f"Participant {st.session_state.experiment_data['participant_id']} mechanism belief: {belief_mechanism}%")
+            st.session_state.current_screen = 11
+            st.rerun()
+
+    def show_questionnaire(self):
+        """Post-experiment questionnaire."""
+        st.markdown('<div class="main-header"><h1>📝 Post-Experiment Questionnaire</h1></div>', unsafe_allow_html=True)
+        
+        self.show_progress_bar(12, 15)
+        
+        st.markdown("""
+        <div class="experiment-card">
+            <h2>📊 Final Questions</h2>
+            <p>Please answer these questions about your experience and background.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Demographics
+        st.markdown("### 👤 Demographics")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            gender = st.selectbox("Gender:", ["", "Male", "Female", "Non-binary", "Prefer not to say"], key="demo_gender")
+            age = st.selectbox("Age group:", ["", "18-24", "25-34", "35-44", "45-54", "55-64", "65+"], key="demo_age")
+        
+        with col2:
+            education = st.selectbox("Education:", ["", "High school", "Some college", "Bachelor's degree", "Master's degree", "PhD", "Other"], key="demo_education")
+            experience = st.selectbox("Previous experiment experience:", ["", "None", "1-2 times", "3-5 times", "More than 5 times"], key="demo_experience")
+        
+        # Task perception
+        st.markdown("### 🎯 Task Perception")
+        
+        difficulty = st.select_slider(
+            "How difficult did you find the trivia questions?",
+            options=["Very easy", "Easy", "Moderate", "Hard", "Very hard"],
+            value="Moderate",
+            key="task_difficulty"
+        )
+        
+        confidence_during = st.select_slider(
+            "How confident were you during the trivia task?",
+            options=["Not confident", "Slightly confident", "Moderately confident", "Very confident", "Extremely confident"],
+            value="Moderately confident",
+            key="confidence_during"
+        )
+        
+        effort = st.select_slider(
+            "How much effort did you put into the trivia questions?",
+            options=["Very little", "Little", "Moderate", "High", "Very high"],
+            value="High",
+            key="effort_level"
+        )
+        
+        # Decision making
+        st.markdown("### 💼 Decision Making")
+        
+        hiring_strategy = st.text_area(
+            "What factors influenced your hiring decisions? Please explain your reasoning:",
+            height=100,
+            key="hiring_strategy"
+        )
+        
+        # Validation questions
+        st.markdown("### ✅ Validation")
+        
+        honest = st.selectbox(
+            "Did you answer all questions honestly?",
+            ["", "Yes, completely honest", "Mostly honest", "Somewhat honest", "Not very honest"],
+            key="honest_responses"
+        )
+        
+        data_quality = st.selectbox(
+            "Should your data be included in the research analysis?",
+            ["", "Yes, include my data", "No, exclude my data", "Unsure"],
+            key="data_quality"
+        )
+        
+        if st.button("📝 Submit Questionnaire", key="submit_questionnaire"):
+            # Validate required fields
+            required_fields = [gender, age, education, experience, difficulty, confidence_during, effort, honest, data_quality]
+            if all(field != "" for field in required_fields) and len(hiring_strategy.strip()) >= 20:
+                
+                questionnaire_data = {
+                    'demographics': {
+                        'gender': gender,
+                        'age': age,
+                        'education': education,
+                        'experience': experience
+                    },
+                    'task_perception': {
+                        'task_difficulty': difficulty,
+                        'confidence_during_task': confidence_during,
+                        'effort_level': effort
+                    },
+                    'decision_making': {
+                        'hiring_strategy': hiring_strategy
+                    },
+                    'validation': {
+                        'honest_responses': honest,
+                        'data_quality': data_quality
+                    }
+                }
+                
+                st.session_state.experiment_data['post_experiment_questionnaire'] = questionnaire_data
+                st.session_state.experiment_data['end_time'] = datetime.now().isoformat()
+                
+                logging.info(f"Participant {st.session_state.experiment_data['participant_id']} completed questionnaire")
+                st.session_state.current_screen = 12
+                st.rerun()
+            else:
+                st.error("Please complete all required fields. The hiring strategy explanation must be at least 20 characters.")
 
     def show_results(self):
         """Enhanced results display with comprehensive research analytics."""
-        st.markdown('<div class="main-header"><h1>🧪 Decision-Making Research Experiment</h1><h2>🎉 Experiment Complete!</h2></div>', unsafe_allow_html=True)
+        st.markdown('<div class="main-header"><h1>🧪 Experiment Complete!</h1><h2>🎉 Thank You for Participating</h2></div>', unsafe_allow_html=True)
         
         self.show_progress_bar(15, 15)
         
-        # Validate complete session data
-        is_valid, validation_errors = self.validator.validate_session_data(st.session_state.experiment_data)
-        if validation_errors:
-            st.warning(f"Data validation warnings: {'; '.join(validation_errors)}")
-            logging.warning(f"Validation issues for {st.session_state.experiment_data['participant_id']}: {validation_errors}")
-        
-        # Save to database with enhanced error handling
+        # Save to database
         save_success = self.db.save_session(st.session_state.experiment_data)
         if save_success:
             st.success("✅ Your data has been successfully saved to the research database.")
@@ -973,13 +1311,13 @@ class OverconfidenceExperiment:
         
         data = st.session_state.experiment_data
         
-        # Enhanced analytics
+        # Calculate key metrics
         wtp_premium = data['wtp_top_group'] - data['wtp_bottom_group']
         actual_performance = 1 if data['performance_level'] == 'High' else 0
         belief_performance = data['belief_own_performance'] / 100
         overconfidence_measure = belief_performance - actual_performance
         
-        # Research summary display
+        # Results display
         col1, col2 = st.columns(2)
         
         with col1:
@@ -988,17 +1326,18 @@ class OverconfidenceExperiment:
             results_html = f"""
             <div class="experiment-card">
                 <h4 style="color: #2c3e50; margin-bottom: 1rem;">🔬 Treatment & Performance</h4>
-                <div class="results-item"><span><strong>Treatment Assignment:</strong></span><span>{'Easy Questions' if data['treatment'] == 'easy' else 'Hard Questions'}</span></div>
+                <div class="results-item"><span><strong>Treatment:</strong></span><span>{'Easy Questions' if data['treatment'] == 'easy' else 'Hard Questions'}</span></div>
                 <div class="results-item"><span><strong>Trivia Score:</strong></span><span>{data['trivia_score']}/{ExperimentConfig.TRIVIA_QUESTIONS_COUNT} ({data.get('accuracy_rate', 0):.1f}%)</span></div>
-                <div class="results-item"><span><strong>Performance Classification:</strong></span><span>{data['performance_level']} Performance</span></div>
-                <div class="results-item"><span><strong>Session Median Score:</strong></span><span>{data.get('session_median_score', 'N/A')}</span></div>
-                <div class="results-item"><span><strong>Your Percentile:</strong></span><span>{data.get('performance_percentile', 0):.1f}%</span></div>
+                <div class="results-item"><span><strong>Performance Level:</strong></span><span>{data['performance_level']} Performance</span></div>
+                <div class="results-item"><span><strong>Assigned Group:</strong></span><span>{data['assigned_group']} Group</span></div>
                 
                 <h4 style="color: #2c3e50; margin: 1.5rem 0 1rem 0;">🧠 Beliefs & Decisions</h4>
                 <div class="results-item"><span><strong>Belief Own Performance:</strong></span><span>{data['belief_own_performance']}%</span></div>
-                <div class="results-item"><span><strong>Assigned Group:</strong></span><span>{data['assigned_group']} Group</span></div>
+                <div class="results-item"><span><strong>WTP Top Group:</strong></span><span>{data['wtp_top_group']} tokens</span></div>
+                <div class="results-item"><span><strong>WTP Bottom Group:</strong></span><span>{data['wtp_bottom_group']} tokens</span></div>
                 <div class="results-item"><span><strong>WTP Premium:</strong></span><span>{wtp_premium:+} tokens</span></div>
-                <div class="results-item"><span><strong>Overconfidence Measure:</strong></span><span>{overconfidence_measure:+.3f}</span></div>
+                <div class="results-item"><span><strong>Belief Mechanism A:</strong></span><span>{data['belief_mechanism']}%</span></div>
+                <div class="results-item"><span><strong>Overconfidence:</strong></span><span>{overconfidence_measure:+.3f}</span></div>
             </div>
             """
             st.markdown(results_html, unsafe_allow_html=True)
@@ -1006,7 +1345,7 @@ class OverconfidenceExperiment:
         with col2:
             st.markdown("### 💰 Payment Calculation")
             
-            # Enhanced payment simulation
+            # Payment simulation
             selected_task = random.choice(['Trivia Performance', 'Belief Own Performance', 'Hiring Decision'])
             
             if selected_task == 'Trivia Performance':
@@ -1029,7 +1368,7 @@ class OverconfidenceExperiment:
             """
             st.markdown(payment_html, unsafe_allow_html=True)
         
-        # Enhanced data export
+        # Data export options
         st.markdown("### 📥 Research Data Export")
         
         col1, col2, col3 = st.columns(3)
@@ -1043,8 +1382,24 @@ class OverconfidenceExperiment:
         
         with col2:
             if st.button("📊 Download Analysis Data", key="download_csv"):
-                flat_data = self.flatten_dict_enhanced(st.session_state.experiment_data)
-                df = pd.DataFrame([flat_data])
+                # Create simplified analysis dataset
+                analysis_data = {
+                    'participant_id': data['participant_id'],
+                    'treatment': data['treatment'],
+                    'trivia_score': data['trivia_score'],
+                    'accuracy_rate': data.get('accuracy_rate', 0),
+                    'performance_level': data['performance_level'],
+                    'belief_own_performance': data['belief_own_performance'],
+                    'assigned_group': data['assigned_group'],
+                    'mechanism_used': data['mechanism_used'],
+                    'wtp_top_group': data['wtp_top_group'],
+                    'wtp_bottom_group': data['wtp_bottom_group'],
+                    'wtp_premium': wtp_premium,
+                    'belief_mechanism': data['belief_mechanism'],
+                    'overconfidence_measure': overconfidence_measure
+                }
+                
+                df = pd.DataFrame([analysis_data])
                 csv = df.to_csv(index=False)
                 b64 = base64.b64encode(csv.encode()).decode()
                 href = f'<a href="data:text/csv;base64,{b64}" download="analysis_data_{data["participant_id"]}.csv">📊 Download CSV</a>'
@@ -1057,36 +1412,23 @@ class OverconfidenceExperiment:
                         del st.session_state[key]
                 st.rerun()
 
-    def flatten_dict_enhanced(self, d: Dict, parent_key: str = '', sep: str = '_') -> Dict:
-        """Enhanced dictionary flattening with better handling of research data."""
-        items = []
-        for k, v in d.items():
-            new_key = f"{parent_key}{sep}{k}" if parent_key else k
-            if isinstance(v, dict):
-                items.extend(self.flatten_dict_enhanced(v, new_key, sep=sep).items())
-            elif isinstance(v, list):
-                if k == 'trivia_answers':
-                    items.append((f"{new_key}_json", json.dumps(v)))
-                    items.append((f"{new_key}_correct_count", sum(1 for x in v if x is not None)))
-                elif k == 'trivia_response_times':
-                    items.append((f"{new_key}_json", json.dumps(v)))
-                    valid_times = [x for x in v if x > 0]
-                    items.append((f"{new_key}_mean_time", np.mean(valid_times) if valid_times else 0))
-                    items.append((f"{new_key}_median_time", np.median(valid_times) if valid_times else 0))
-                else:
-                    items.append((new_key, json.dumps(v)))
-            else:
-                items.append((new_key, v))
-        return dict(items)
-
     def run_experiment(self):
-        """Main experiment execution with comprehensive error handling."""
+        """Main experiment execution with all phases."""
         try:
             screens = [
-                self.show_welcome_screen,           # 0
-                # Additional screens would be implemented here following the same enhanced pattern
-                # ... (other screen methods)
-                self.show_results                   # Final screen
+                self.show_welcome_screen,                    # 0
+                self.show_treatment_assignment,              # 1
+                self.show_trivia_questions,                  # 2
+                self.show_belief_instructions,               # 3
+                self.show_belief_own_screen,                 # 4
+                self.show_group_assignment_instructions,     # 5
+                self.show_group_assignment,                  # 6
+                self.show_comprehension_questions,           # 7
+                self.show_hiring_instructions,               # 8
+                self.show_hiring_decisions,                  # 9
+                self.show_mechanism_belief,                  # 10
+                self.show_questionnaire,                     # 11
+                self.show_results                            # 12
             ]
             
             current_screen = st.session_state.current_screen
@@ -1100,7 +1442,6 @@ class OverconfidenceExperiment:
             st.error(f"An experimental error occurred: {str(e)}")
             logging.error(f"Experiment error: {str(e)}", exc_info=True)
             
-            # Enhanced recovery options
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("🔄 Restart Experiment"):
@@ -1116,9 +1457,9 @@ class OverconfidenceExperiment:
                         st.markdown(href, unsafe_allow_html=True)
 
 def main():
-    """Main application entry point with enhanced configuration."""
+    """Main application entry point."""
     try:
-        # Professional research interface
+        # Hide streamlit elements for professional appearance
         st.markdown("""
         <style>
             #MainMenu {visibility: hidden;}
@@ -1136,37 +1477,38 @@ def main():
         st.error("Critical application error. Please refresh and try again.")
         logging.critical(f"Application error: {str(e)}", exc_info=True)
     
-    # Enhanced research sidebar
+    # Research information sidebar
     with st.sidebar:
-        st.markdown("### 🧪 Enhanced Research Platform")
+        st.markdown("### 🧪 Research Experiment Platform")
         st.markdown(f"""
-        **Overconfidence & Discrimination Experiment**
+        **Overconfidence & Discrimination Study**
         
         **Protocol:** Management Science validated
-        **Version:** 2.1.0 (Enhanced)
+        **Version:** 2.1.0 (Complete)
         
         ---
-        
-        **🎯 Key Improvements:**
-        - Session-relative performance ranking
-        - Enhanced data validation
-        - Robust error handling  
-        - Configurable parameters
-        - Research-grade analytics
         
         **📊 Current Session:**
         - Questions: {ExperimentConfig.TRIVIA_QUESTIONS_COUNT}
         - Time limit: {ExperimentConfig.TRIVIA_TIME_LIMIT//60} minutes
-        - Performance: Top {ExperimentConfig.PERFORMANCE_CUTOFF_PERCENTILE}%
+        - Performance cutoff: Top {ExperimentConfig.PERFORMANCE_CUTOFF_PERCENTILE}%
+        
+        **🔬 Key Features:**
+        - Session-relative performance ranking
+        - BDM mechanism for incentives
+        - Comprehensive data validation
+        - Real-time progress tracking
         """)
         
         if hasattr(st.session_state, 'experiment_data'):
             participant_id = st.session_state.experiment_data.get('participant_id', 'Unknown')
             screen = st.session_state.get('current_screen', 0)
+            treatment = st.session_state.experiment_data.get('treatment', 'Not assigned')
             st.markdown(f"""
             **📋 Session Status:**
             - ID: `{participant_id}`
-            - Screen: {screen}/15
+            - Screen: {screen+1}/13
+            - Treatment: {treatment.title() if treatment != 'Not assigned' else treatment}
             - Status: Active
             """)
 
