@@ -576,19 +576,19 @@ class OverconfidenceExperiment:
             
             <div class="methodology-warning">
                 <h4>🔬 Research Study Details</h4>
-                <p><strong>Study Title:</strong> Individual Differences in Decision-Making Under Uncertainty</p>
+                <p><strong>Study Title:</strong> "Individual Differences in Decision-Making Under Uncertainty"</p>
                 <p><strong>Principal Investigator:</strong> Dr. Sarah Chen, Department of Economics</p>
                 <p><strong>Institution:</strong> Center for Behavioral Economics Research</p>
                 <p><strong>Co-Investigators:</strong> Dr. Michael Rodriguez (Psychology), Dr. Jennifer Park (Management)</p>
                 <p><strong>Study Duration:</strong> Approximately 45-60 minutes</p>
-                <p><strong>IRB Protocol:</strong> CBER-2024-0847</p>
+                <p><strong>IRB Protocol #:</strong> CBER-2024-0847</p>
                 <p><strong>Methodology:</strong> Validated experimental design based on published Management Science protocols</p>
             </div>
             
             <div style="background: #e8f4fd; border: 2px solid #1976d2; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
                 <h4 style="color: #1565c0; margin-top: 0;">🎯 Purpose of This Study</h4>
                 <p style="color: #1565c0;">
-                    This research examines how people make decisions when they have incomplete information about their own abilities and others qualifications. We are studying individual differences in confidence, belief formation, and decision-making processes. Your participation will contribute to our understanding of these important cognitive and economic phenomena.
+                    This research examines how people make decisions when they have incomplete information about their own abilities and others' qualifications. We are studying individual differences in confidence, belief formation, and decision-making processes. Your participation will contribute to our understanding of these important cognitive and economic phenomena.
                 </p>
             </div>
             
@@ -673,10 +673,10 @@ class OverconfidenceExperiment:
             <h4>📜 Informed Consent Statement</h4>
             <div style="background: #f5f5f5; border: 2px solid #9e9e9e; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; font-style: italic;">
                 <p style="color: #424242;">
-                    I have read and understood the information provided about this research study. I understand that my participation is voluntary and that I may withdraw at any time without penalty. I understand the potential risks and benefits of participation. I have had the opportunity to ask questions, and all my questions have been answered to my satisfaction.
+                    "I have read and understood the information provided about this research study. I understand that my participation is voluntary and that I may withdraw at any time without penalty. I understand the potential risks and benefits of participation. I have had the opportunity to ask questions, and all my questions have been answered to my satisfaction."
                 </p>
                 <p style="color: #424242; margin-bottom: 0;">
-                    By checking the consent box below, I indicate my voluntary agreement to participate in this research study.
+                    "By checking the consent box below, I indicate my voluntary agreement to participate in this research study."
                 </p>
             </div>
         </div>
@@ -1528,9 +1528,9 @@ class OverconfidenceExperiment:
                         st.markdown(href, unsafe_allow_html=True)
 
 def main():
-    """Main application entry point with enhanced configuration."""
+    """Main application entry point."""
     try:
-        # Professional research interface
+        # Hide streamlit elements for professional appearance
         st.markdown("""
         <style>
             #MainMenu {visibility: hidden;}
@@ -1547,6 +1547,21 @@ def main():
     except Exception as e:
         st.error("Critical application error. Please refresh and try again.")
         logging.critical(f"Application error: {str(e)}", exc_info=True)
+        
+        # Provide recovery options without self references
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("🔄 Restart Experiment"):
+                for key in list(st.session_state.keys()):
+                    del st.session_state[key]
+                st.rerun()
+        with col2:
+            if st.button("💾 Emergency Data Save"):
+                if 'experiment_data' in st.session_state:
+                    json_data = json.dumps(st.session_state.experiment_data, indent=2)
+                    b64 = base64.b64encode(json_data.encode()).decode()
+                    href = f'<a href="data:application/json;base64,{b64}" download="emergency_backup.json">💾 Download Emergency Backup</a>'
+                    st.markdown(href, unsafe_allow_html=True)
     
     # Research information sidebar
     with st.sidebar:
@@ -1576,8 +1591,7 @@ def main():
         if hasattr(st.session_state, 'experiment_data'):
             participant_id = st.session_state.experiment_data.get('participant_id', 'Unknown')
             screen = st.session_state.get('current_screen', 0)
-            treatment = st.session_state.experiment_data.get('treatment', None)
-            
+            treatment = st.session_state.experiment_data.get('treatment', 'Not assigned')
             # Safe treatment display handling None values
             if treatment and treatment != 'Not assigned':
                 treatment_display = treatment.title()
