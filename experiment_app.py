@@ -34,7 +34,6 @@ import hashlib
 import sqlite3
 import io
 import zipfile
-from scipy import stats
 
 # Configure logging for research audit trail
 logging.basicConfig(
