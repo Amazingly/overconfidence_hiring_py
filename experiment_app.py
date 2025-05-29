@@ -302,14 +302,6 @@ class OverconfidenceExperiment:
             
         if 'question_start_times' not in st.session_state:
             st.session_state.question_start_times = {}
-            
-        # Initialize comprehension tracking
-        if 'comprehension_passed' not in st.session_state:
-            st.session_state.comprehension_passed = False
-            
-        # Initialize screen tracking for navigation
-        if 'last_screen' not in st.session_state:
-            st.session_state.last_screen = -1
 
     def get_trivia_questions(self) -> Dict[str, List[Dict]]:
         """Return comprehensive, research-validated trivia question banks."""
@@ -909,23 +901,7 @@ class OverconfidenceExperiment:
         st.markdown("Please answer these questions to make sure you understand the group assignment process.")
         st.info("You must answer all questions correctly to continue.")
         
-        # Initialize comprehension status in session state
-        if 'comprehension_passed' not in st.session_state:
-            st.session_state.comprehension_passed = False
-        
-        # Reset comprehension status when entering this screen to ensure fresh attempt
-        # This handles cases where users navigate back to this screen
-        if not hasattr(st.session_state, 'last_screen'):
-            st.session_state.last_screen = -1
-            
-        # If we're entering the comprehension screen from a different screen, reset comprehension
-        if st.session_state.last_screen != 7 and st.session_state.get('current_screen') == 7:
-            st.session_state.comprehension_passed = False
-            
-        # Update last screen tracker
-        st.session_state.last_screen = st.session_state.get('current_screen', 7)
-        
-        # Comprehension questions with default index to avoid pre-selection
+        # Comprehension questions
         q1 = st.radio(
             "1. What determines whether groups are assigned by Mechanism A or Mechanism B?",
             options=[
@@ -934,60 +910,62 @@ class OverconfidenceExperiment:
                 "Your belief about your performance",
                 "Random assignment"
             ],
-            key="comp_q1",
-            index=None
+            key="comp_q1"
         )
         
         q2 = st.radio(
             "2. What is the probability that groups reflect performance under Mechanism A?",
             options=["55%", "75%", "85%", "95%"],
-            key="comp_q2",
-            index=None
+            key="comp_q2"
         )
         
         q3 = st.radio(
             "3. Do you know which mechanism was used to assign your group?",
             options=["Yes, I know which mechanism was used", "No, I don't know which mechanism was used"],
-            key="comp_q3",
-            index=None
+            key="comp_q3"
         )
         
-        # Check if all questions are answered
-        all_answered = all(answer is not None for answer in [q1, q2, q3])
-        
-        # Check if answers have been evaluated
-        if not st.session_state.comprehension_passed:
-            # Only show check button if all questions are answered
-            if all_answered:
-                if st.button("📝 Check Answers", key="check_comprehension", type="primary"):
-                    correct_answers = [
-                        "A coin flip by the computer",
-                        "95%", 
-                        "No, I don't know which mechanism was used"
-                    ]
+        # Check if all questions have been answered
+        if q1 and q2 and q3:
+            if st.button("📝 Check Answers", key="check_comprehension", type="primary"):
+                correct_answers = [
+                    "A coin flip by the computer",
+                    "95%", 
+                    "No, I don't know which mechanism was used"
+                ]
+                
+                user_answers = [q1, q2, q3]
+                all_correct = all(user == correct for user, correct in zip(user_answers, correct_answers))
+                
+                if all_correct:
+                    st.success("✅ All correct! You understand the process.")
+                    st.success("🎉 Automatically advancing to hiring decisions...")
                     
-                    user_answers = [q1, q2, q3]
-                    all_correct = all(user == correct for user, correct in zip(user_answers, correct_answers))
+                    # Track successful completion
+                    if 'comprehension_attempts' not in st.session_state.experiment_data:
+                        st.session_state.experiment_data['comprehension_attempts'] = 0
+                    st.session_state.experiment_data['comprehension_attempts'] += 1
+                    st.session_state.experiment_data['comprehension_passed'] = True
                     
-                    if all_correct:
-                        st.session_state.comprehension_passed = True
-                        st.success("✅ All correct! You understand the process.")
-                        st.rerun()  # Refresh to show continue button
-                    else:
-                        st.error("❌ Some answers are incorrect. Please review the instructions and try again.")
-                        
-                        # Track attempts
-                        if 'comprehension_attempts' not in st.session_state.experiment_data:
-                            st.session_state.experiment_data['comprehension_attempts'] = 0
-                        st.session_state.experiment_data['comprehension_attempts'] += 1
-            else:
-                st.info("Please answer all questions before checking your answers.")
+                    # Auto-advance to next screen
+                    time.sleep(1)  # Brief pause to show success message
+                    st.session_state.current_screen = 8
+                    st.rerun()
+                else:
+                    st.error("❌ Some answers are incorrect. Please review the instructions and try again.")
+                    
+                    # Show correct answers for learning
+                    st.markdown("**Correct answers:**")
+                    st.markdown("1. A coin flip by the computer")
+                    st.markdown("2. 95%")
+                    st.markdown("3. No, I don't know which mechanism was used")
+                    
+                    # Track attempts
+                    if 'comprehension_attempts' not in st.session_state.experiment_data:
+                        st.session_state.experiment_data['comprehension_attempts'] = 0
+                    st.session_state.experiment_data['comprehension_attempts'] += 1
         else:
-            # Show success message and continue button
-            st.success("✅ All correct! You understand the process.")
-            if st.button("➡️ Continue to Hiring Decisions", key="continue_to_hiring", type="primary"):
-                st.session_state.current_screen = 8
-                st.rerun()
+            st.info("Please answer all three questions before checking your answers.")
 
     def show_hiring_instructions(self):
         """Instructions for hiring decisions."""
@@ -1340,10 +1318,9 @@ class OverconfidenceExperiment:
         
         with col3:
             if st.button("🔄 Start New Session", key="new_session", type="primary"):
-                # Reset all session states for new experiment
-                keys_to_reset = [key for key in st.session_state.keys() if key != 'database_path']
-                for key in keys_to_reset:
-                    del st.session_state[key]
+                for key in list(st.session_state.keys()):
+                    if key != 'database_path':
+                        del st.session_state[key]
                 st.rerun()
 
     def run_experiment(self):
@@ -1379,9 +1356,7 @@ class OverconfidenceExperiment:
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("🔄 Restart Experiment", type="primary"):
-                    # Reset all session states for restart
-                    keys_to_reset = [key for key in st.session_state.keys()]
-                    for key in keys_to_reset:
+                    for key in list(st.session_state.keys()):
                         del st.session_state[key]
                     st.rerun()
             with col2:
@@ -1420,9 +1395,7 @@ def main():
         col1, col2 = st.columns(2)
         with col1:
             if st.button("🔄 Restart Experiment", type="primary"):
-                # Reset all session states for restart
-                keys_to_reset = [key for key in st.session_state.keys()]
-                for key in keys_to_reset:
+                for key in list(st.session_state.keys()):
                     del st.session_state[key]
                 st.rerun()
         with col2:
