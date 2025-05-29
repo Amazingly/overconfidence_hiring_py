@@ -89,7 +89,7 @@ class ExperimentConfig:
     MIN_HIRING_EXPLANATION_LENGTH = 20
     MIN_STRATEGY_EXPLANATION_LENGTH = 10
 
-# Minimal CSS for professional appearance only
+# Clean CSS - only hiding Streamlit UI elements
 st.markdown("""
 <style>
     #MainMenu {visibility: hidden;}
@@ -423,134 +423,162 @@ class OverconfidenceExperiment:
         return selected_questions
 
     def show_progress_bar(self, current_step: int, total_steps: int):
-        """Clean progress bar without HTML artifacts."""
+        """Clean progress bar using native Streamlit components."""
         progress = current_step / total_steps
-        
-        # Use Streamlit's native progress bar
         st.progress(progress, text=f"Screen {current_step} of {total_steps} • Progress: {progress*100:.1f}%")
 
     def show_welcome_screen(self):
-        """Enhanced welcome screen with improved research disclosure."""
-        st.markdown('<div class="main-header"><h1>🎓 Behavioral Economics Research Study</h1><p>Center for Behavioral Economics Research | Individual Differences in Decision-Making</p></div>', unsafe_allow_html=True)
+        """Clean welcome screen using native Streamlit components only."""
+        st.title("🎓 Behavioral Economics Research Study")
+        st.markdown("**Center for Behavioral Economics Research | Individual Differences in Decision-Making**")
         
         self.show_progress_bar(1, 15)
         
+        st.header("📋 Research Information & Informed Consent")
+        
+        # Research Study Details
+        st.info("""
+        **🔬 Research Study Details**
+        
+        **Study Title:** "Individual Differences in Decision-Making Under Uncertainty"
+        
+        **Principal Investigator:** Dr. Sarah Chen, Department of Economics
+        
+        **Institution:** Center for Behavioral Economics Research
+        
+        **Co-Investigators:** Dr. Michael Rodriguez (Psychology), Dr. Jennifer Park (Management)
+        
+        **Study Duration:** Approximately 45-60 minutes
+        
+        **IRB Protocol #:** CBER-2024-0847
+        
+        **Methodology:** Validated experimental design based on published Management Science protocols
+        """)
+        
+        # Purpose
+        st.success("""
+        **🎯 Purpose of This Study**
+        
+        This research examines how people make decisions when they have incomplete information about their own abilities and others' qualifications. We are studying individual differences in confidence, belief formation, and decision-making processes. Your participation will contribute to our understanding of these important cognitive and economic phenomena.
+        """)
+        
+        # What You Will Do
+        st.subheader("📖 What You Will Do")
+        st.markdown("Your participation will involve the following activities:")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("""
+            **Phase 1: Cognitive Task (10 minutes)**
+            - Answer 25 general knowledge questions within a time limit
+            
+            **Phase 2: Belief Assessment (5 minutes)**
+            - Report your beliefs about your performance relative to others
+            
+            **Phase 3: Group Assignment (2 minutes)**
+            - Receive group assignment based on performance
+            """)
+        
+        with col2:
+            st.markdown("""
+            **Phase 4: Economic Decisions (15 minutes)**
+            - Make hiring decisions involving other participants
+            
+            **Phase 5: Post-Study Questions (10 minutes)**
+            - Complete demographic questionnaire and provide feedback
+            """)
+        
+        # Potential Benefits
+        st.success("""
+        **✅ Potential Benefits**
+        
+        - Gain insights into your own decision-making processes
+        - Contribute to scientific understanding of economic behavior
+        - Receive monetary compensation for your time
+        - Learn about behavioral economics research methods
+        """)
+        
+        # Potential Risks
+        st.warning("""
+        **⚠️ Potential Risks & Discomforts**
+        
+        **Minimal Risk:** This study involves no more than minimal risk
+        
+        **Cognitive Effort:** Some questions may be challenging; this is normal
+        
+        **Time Commitment:** The study requires sustained attention for 45-60 minutes
+        
+        **Performance Feedback:** You will receive information about your relative performance
+        
+        **Important:** If you experience any discomfort, you may withdraw at any time without penalty.
+        """)
+        
+        # Compensation Details
+        st.success(f"""
+        **💰 Compensation Details**
+        
+        **Base Payment:** ${ExperimentConfig.SHOW_UP_FEE:.2f} participation fee (guaranteed)
+        
+        **Performance Bonus:** Additional earnings based on ONE randomly selected task
+        
+        **Token Exchange Rate:** 1 token = ${ExperimentConfig.TOKEN_TO_DOLLAR_RATE:.2f}
+        
+        **Total Possible Earnings:** ${ExperimentConfig.SHOW_UP_FEE:.2f} - ${ExperimentConfig.SHOW_UP_FEE + (ExperimentConfig.HIGH_PERFORMANCE_TOKENS * ExperimentConfig.TOKEN_TO_DOLLAR_RATE):.2f}
+        
+        **Payment Processing:** Payment will be processed within 48 hours of study completion via your preferred method.
+        """)
+        
+        # Privacy & Data Protection
+        st.info("""
+        **🔒 Privacy & Data Protection**
+        
+        **Anonymity:** Your identity will not be linked to your responses
+        
+        **Data Security:** All data encrypted and stored on secure servers
+        
+        **Data Retention:** Research data stored for 7 years per federal regulations
+        
+        **Data Sharing:** Only aggregated, anonymous data may be shared with other researchers
+        
+        **Publication:** Results may be published in academic journals with no identifying information
+        """)
+        
+        # Your Rights
+        st.subheader("🔒 Your Rights as a Research Participant")
         st.markdown("""
-        <div class="experiment-card">
-            <h2>📋 Research Information & Informed Consent</h2>
-            
-            <div class="methodology-warning">
-                <h4>🔬 Research Study Details</h4>
-                <p><strong>Study Title:</strong> "Individual Differences in Decision-Making Under Uncertainty"</p>
-                <p><strong>Principal Investigator:</strong> Dr. Sarah Chen, Department of Economics</p>
-                <p><strong>Institution:</strong> Center for Behavioral Economics Research</p>
-                <p><strong>Co-Investigators:</strong> Dr. Michael Rodriguez (Psychology), Dr. Jennifer Park (Management)</p>
-                <p><strong>Study Duration:</strong> Approximately 45-60 minutes</p>
-                <p><strong>IRB Protocol #:</strong> CBER-2024-0847</p>
-                <p><strong>Methodology:</strong> Validated experimental design based on published Management Science protocols</p>
-            </div>
-            
-            <div style="background: #e8f4fd; border: 2px solid #1976d2; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-                <h4 style="color: #1565c0; margin-top: 0;">🎯 Purpose of This Study</h4>
-                <p style="color: #1565c0;">
-                    This research examines how people make decisions when they have incomplete information about their own abilities and others' qualifications. We are studying individual differences in confidence, belief formation, and decision-making processes. Your participation will contribute to our understanding of these important cognitive and economic phenomena.
-                </p>
-            </div>
-            
-            <h4>📖 What You Will Do</h4>
-            <p>Your participation will involve the following activities:</p>
-            <ul>
-                <li><strong>Cognitive Task (10 minutes):</strong> Answer 25 general knowledge questions within a time limit</li>
-                <li><strong>Belief Assessment (5 minutes):</strong> Report your beliefs about your performance relative to others</li>
-                <li><strong>Group Assignment (2 minutes):</strong> Receive group assignment based on performance</li>
-                <li><strong>Economic Decisions (15 minutes):</strong> Make hiring decisions involving other participants</li>
-                <li><strong>Post-Study Questions (10 minutes):</strong> Complete demographic questionnaire and provide feedback</li>
-            </ul>
-            
-            <div style="background: #e8f5e8; border: 2px solid #4caf50; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-                <h4 style="color: #2e7d2e; margin-top: 0;">✅ Potential Benefits</h4>
-                <ul style="color: #2e7d2e; margin-bottom: 0;">
-                    <li>Gain insights into your own decision-making processes</li>
-                    <li>Contribute to scientific understanding of economic behavior</li>
-                    <li>Receive monetary compensation for your time</li>
-                    <li>Learn about behavioral economics research methods</li>
-                </ul>
-            </div>
-            
-            <div style="background: #fff8e1; border: 2px solid #ff9800; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-                <h4 style="color: #ef6c00; margin-top: 0;">⚠️ Potential Risks & Discomforts</h4>
-                <ul style="color: #ef6c00;">
-                    <li><strong>Minimal Risk:</strong> This study involves no more than minimal risk</li>
-                    <li><strong>Cognitive Effort:</strong> Some questions may be challenging; this is normal</li>
-                    <li><strong>Time Commitment:</strong> The study requires sustained attention for 45-60 minutes</li>
-                    <li><strong>Performance Feedback:</strong> You will receive information about your relative performance</li>
-                </ul>
-                <p style="color: #ef6c00; margin-bottom: 0;">
-                    <strong>Important:</strong> If you experience any discomfort, you may withdraw at any time without penalty.
-                </p>
-            </div>
-            
-            <div style="background: #d4edda; border: 2px solid #c3e6cb; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-                <h4 style="color: #155724; margin-top: 0;">💰 Compensation Details</h4>
-                <p style="color: #155724;">
-                    <strong>Base Payment:</strong> ${ExperimentConfig.SHOW_UP_FEE:.2f} participation fee (guaranteed)<br>
-                    <strong>Performance Bonus:</strong> Additional earnings based on ONE randomly selected task<br>
-                    <strong>Token Exchange Rate:</strong> 1 token = ${ExperimentConfig.TOKEN_TO_DOLLAR_RATE:.2f}<br>
-                    <strong>Total Possible Earnings:</strong> ${ExperimentConfig.SHOW_UP_FEE:.2f} - ${ExperimentConfig.SHOW_UP_FEE + (ExperimentConfig.HIGH_PERFORMANCE_TOKENS * ExperimentConfig.TOKEN_TO_DOLLAR_RATE):.2f}
-                </p>
-                <p style="color: #155724; margin-bottom: 0;">
-                    <em>Payment will be processed within 48 hours of study completion via your preferred method.</em>
-                </p>
-            </div>
-            
-            <div style="background: #f3e5f5; border: 2px solid #9c27b0; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-                <h4 style="color: #7b1fa2; margin-top: 0;">🔒 Privacy & Data Protection</h4>
-                <ul style="color: #7b1fa2;">
-                    <li><strong>Anonymity:</strong> Your identity will not be linked to your responses</li>
-                    <li><strong>Data Security:</strong> All data encrypted and stored on secure servers</li>
-                    <li><strong>Data Retention:</strong> Research data stored for 7 years per federal regulations</li>
-                    <li><strong>Data Sharing:</strong> Only aggregated, anonymous data may be shared with other researchers</li>
-                    <li><strong>Publication:</strong> Results may be published in academic journals with no identifying information</li>
-                </ul>
-            </div>
-            
-            <h4>🔒 Your Rights as a Research Participant</h4>
-            <ul>
-                <li><strong>Voluntary Participation:</strong> Your participation is completely voluntary</li>
-                <li><strong>Right to Withdraw:</strong> You may stop participating at any time without penalty</li>
-                <li><strong>Right to Ask Questions:</strong> Contact the research team with any concerns</li>
-                <li><strong>Data Access:</strong> You may request a copy of your individual data</li>
-                <li><strong>Complaint Process:</strong> Contact the IRB if you have concerns about the research</li>
-            </ul>
-            
-            <div style="background: #e3f2fd; border: 2px solid #2196f3; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-                <h4 style="color: #1976d2; margin-top: 0;">📞 Contact Information</h4>
-                <p style="color: #1976d2;">
-                    <strong>Research Team:</strong> behavioral.economics@university.edu<br>
-                    <strong>IRB Office:</strong> (555) 123-4567 | irb@university.edu<br>
-                    <strong>Study Coordinator:</strong> Dr. Sarah Chen | (555) 987-6543
-                </p>
-                <p style="color: #1976d2; margin-bottom: 0;">
-                    <em>Please save this information for your records.</em>
-                </p>
-            </div>
-            
-            <h4>📜 Informed Consent Statement</h4>
-            <div style="background: #f5f5f5; border: 2px solid #9e9e9e; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; font-style: italic;">
-                <p style="color: #424242;">
-                    "I have read and understood the information provided about this research study. I understand that my participation is voluntary and that I may withdraw at any time without penalty. I understand the potential risks and benefits of participation. I have had the opportunity to ask questions, and all my questions have been answered to my satisfaction."
-                </p>
-                <p style="color: #424242; margin-bottom: 0;">
-                    "By checking the consent box below, I indicate my voluntary agreement to participate in this research study."
-                </p>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        - **Voluntary Participation:** Your participation is completely voluntary
+        - **Right to Withdraw:** You may stop participating at any time without penalty
+        - **Right to Ask Questions:** Contact the research team with any concerns
+        - **Data Access:** You may request a copy of your individual data
+        - **Complaint Process:** Contact the IRB if you have concerns about the research
+        """)
+        
+        # Contact Information
+        st.info("""
+        **📞 Contact Information**
+        
+        **Research Team:** behavioral.economics@university.edu
+        
+        **IRB Office:** (555) 123-4567 | irb@university.edu
+        
+        **Study Coordinator:** Dr. Sarah Chen | (555) 987-6543
+        
+        **Please save this information for your records.**
+        """)
+        
+        # Consent Statement
+        st.subheader("📜 Informed Consent Statement")
+        st.markdown("""
+        *"I have read and understood the information provided about this research study. I understand that my participation is voluntary and that I may withdraw at any time without penalty. I understand the potential risks and benefits of participation. I have had the opportunity to ask questions, and all my questions have been answered to my satisfaction."*
+        
+        *"By checking the consent box below, I indicate my voluntary agreement to participate in this research study."*
+        """)
         
         consent = st.checkbox("I have read and understood the research information above, and I consent to participate in this study.", key="consent_checkbox")
         
         if consent:
-            if st.button("🚀 Begin Research Experiment", key="begin_experiment"):
+            if st.button("🚀 Begin Research Experiment", key="begin_experiment", type="primary"):
                 st.session_state.experiment_data['consent_given'] = True
                 st.session_state.experiment_data['consent_timestamp'] = datetime.now().isoformat()
                 st.session_state.current_screen = 1
@@ -593,7 +621,7 @@ class OverconfidenceExperiment:
         **Bottom 50% performers:** {ExperimentConfig.LOW_PERFORMANCE_TOKENS} tokens
         """)
         
-        if st.button("▶️ Start Trivia Questions", key="start_trivia"):
+        if st.button("▶️ Start Trivia Questions", key="start_trivia", type="primary"):
             st.session_state.trivia_start_time = time.time()
             st.session_state.current_screen = 2
             st.rerun()
@@ -671,7 +699,7 @@ class OverconfidenceExperiment:
                     st.session_state.current_trivia_question += 1
                     st.rerun()
             else:
-                if st.button("✅ Submit All Answers", key="submit_trivia"):
+                if st.button("✅ Submit All Answers", key="submit_trivia", type="primary"):
                     self.submit_trivia()
 
     def submit_trivia(self):
@@ -728,7 +756,7 @@ class OverconfidenceExperiment:
         This payment mechanism rewards honest reporting of your true beliefs.
         """)
         
-        if st.button("📝 Continue to Belief Question", key="continue_to_belief"):
+        if st.button("📝 Continue to Belief Question", key="continue_to_belief", type="primary"):
             st.session_state.current_screen = 4
             st.rerun()
 
@@ -763,7 +791,7 @@ class OverconfidenceExperiment:
         You believe there is a **{belief}%** chance you are in the top 50% of performers.
         """)
         
-        if st.button("✅ Submit Belief", key="submit_belief"):
+        if st.button("✅ Submit Belief", key="submit_belief", type="primary"):
             st.session_state.experiment_data['belief_own_performance'] = belief
             logging.info(f"Participant {st.session_state.experiment_data['participant_id']} belief: {belief}%")
             st.session_state.current_screen = 5
@@ -812,7 +840,7 @@ class OverconfidenceExperiment:
             Groups are only mildly likely to reflect performance
             """)
         
-        if st.button("🎲 Proceed to Group Assignment", key="proceed_to_assignment"):
+        if st.button("🎲 Proceed to Group Assignment", key="proceed_to_assignment", type="primary"):
             st.session_state.current_screen = 6
             st.rerun()
 
@@ -859,7 +887,7 @@ class OverconfidenceExperiment:
         **You do NOT know:** Which mechanism was used or whether your group reflects your performance
         """)
         
-        if st.button("➡️ Continue to Next Phase", key="continue_after_assignment"):
+        if st.button("➡️ Continue to Next Phase", key="continue_after_assignment", type="primary"):
             st.session_state.current_screen = 7
             st.rerun()
 
@@ -897,7 +925,7 @@ class OverconfidenceExperiment:
             key="comp_q3"
         )
         
-        if st.button("📝 Check Answers", key="check_comprehension"):
+        if st.button("📝 Check Answers", key="check_comprehension", type="primary"):
             correct_answers = [
                 "A coin flip by the computer",
                 "95%", 
@@ -909,7 +937,7 @@ class OverconfidenceExperiment:
             
             if all_correct:
                 st.success("✅ All correct! You understand the process.")
-                if st.button("➡️ Continue to Hiring Decisions", key="continue_to_hiring"):
+                if st.button("➡️ Continue to Hiring Decisions", key="continue_to_hiring", type="primary"):
                     st.session_state.current_screen = 8
                     st.rerun()
             else:
@@ -958,237 +986,7 @@ class OverconfidenceExperiment:
         **Best strategy:** State your true maximum willingness to pay!
         """)
         
-        if st.button("💼 Begin Hiring Decisions", key="begin_hiring"):
-            st.session_state.current_screen = 9
-            st.rerun()
-
-    def show_belief_own_screen(self):
-        """Elicit beliefs about own performance."""
-        st.title("🧠 Belief About Your Performance")
-        
-        self.show_progress_bar(5, 15)
-        
-        st.header("🎯 What Do You Think?")
-        
-        st.warning("""
-        **The Question:**
-        
-        What do you think is the probability that you are a **High Performance** participant?
-        
-        (Remember: High Performance = Top 50% of participants in this session)
-        """)
-        
-        belief = st.slider(
-            "Your belief (as a percentage from 0% to 100%):",
-            min_value=0,
-            max_value=100,
-            value=50,
-            step=1,
-            key="belief_own_performance"
-        )
-        
-        st.info(f"""
-        **Your Current Answer: {belief}%**
-        
-        You believe there is a **{belief}%** chance you are in the top 50% of performers.
-        """)
-        
-        if st.button("✅ Submit Belief", key="submit_belief"):
-            st.session_state.experiment_data['belief_own_performance'] = belief
-            logging.info(f"Participant {st.session_state.experiment_data['participant_id']} belief: {belief}%")
-            st.session_state.current_screen = 5
-            st.rerun()
-
-    def show_group_assignment_instructions(self):
-        """Explain group assignment mechanism."""
-        st.title("🎓 Behavioral Economics Research Study")
-        
-        self.show_progress_bar(6, 15)
-        
-        st.header("🎲 Phase 3: Group Assignment")
-        
-        st.subheader("🔄 How Groups Are Assigned")
-        st.info("""
-        You and all other participants will now be assigned to groups: **Top** or **Bottom**.
-        
-        **The computer will flip a coin to determine the assignment mechanism:**
-        
-        • **If HEADS:** 95% chance your group reflects your performance + 5% chance it doesn't
-        • **If TAILS:** 55% chance your group reflects your performance + 45% chance it doesn't
-        """)
-        
-        st.subheader("🎯 What This Means")
-        st.warning("""
-        **"Reflects performance" means:**
-        • High Performance → Top Group
-        • Low Performance → Bottom Group
-        
-        *You will see your group assignment but NOT the coin flip result.*
-        """)
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.success("""
-            **🥇 Mechanism A (95% Accurate)**
-            
-            Groups are highly likely to reflect actual performance
-            """)
-        
-        with col2:
-            st.error("""
-            **🎲 Mechanism B (55% Accurate)**
-            
-            Groups are only mildly likely to reflect performance
-            """)
-        
-        if st.button("🎲 Proceed to Group Assignment", key="proceed_to_assignment"):
-            st.session_state.current_screen = 6
-            st.rerun()
-
-    def show_group_assignment(self):
-        """Show group assignment result."""
-        st.title("🏷️ Your Group Assignment")
-        
-        self.show_progress_bar(7, 15)
-        
-        if st.session_state.experiment_data['assigned_group'] is None:
-            # Simulate mechanism selection and group assignment
-            mechanism = random.choice(['A', 'B'])
-            accuracy = ExperimentConfig.MECHANISM_A_ACCURACY if mechanism == 'A' else ExperimentConfig.MECHANISM_B_ACCURACY
-            
-            # Determine if assignment reflects performance
-            reflects_performance = random.random() < accuracy
-            
-            if reflects_performance:
-                assigned_group = 'Top' if st.session_state.experiment_data['performance_level'] == 'High' else 'Bottom'
-            else:
-                assigned_group = 'Bottom' if st.session_state.experiment_data['performance_level'] == 'High' else 'Top'
-            
-            st.session_state.experiment_data['mechanism_used'] = mechanism
-            st.session_state.experiment_data['mechanism_reflects_performance'] = reflects_performance
-            st.session_state.experiment_data['assigned_group'] = assigned_group
-            
-            logging.info(f"Participant {st.session_state.experiment_data['participant_id']} assigned to {assigned_group} group via mechanism {mechanism}")
-        
-        group = st.session_state.experiment_data['assigned_group']
-        
-        # Clean group display
-        if group == "Top":
-            st.success(f"## 🥇 You have been assigned to the **{group} Group**")
-        else:
-            st.info(f"## 🥈 You have been assigned to the **{group} Group**")
-        
-        st.subheader("🔍 What You Know")
-        st.markdown(f"""
-        **Information available to you:**
-        - Your group assignment: **{group} Group**
-        - The computer flipped a coin to choose the mechanism
-        - Your group either reflects your performance or it doesn't
-        
-        **You do NOT know:** Which mechanism was used or whether your group reflects your performance
-        """)
-        
-        if st.button("➡️ Continue to Next Phase", key="continue_after_assignment"):
-            st.session_state.current_screen = 7
-            st.rerun()
-
-    def show_comprehension_questions(self):
-        """Show comprehension questions to ensure understanding."""
-        st.title("✅ Comprehension Check")
-        
-        self.show_progress_bar(8, 15)
-        
-        st.header("Understanding Check")
-        st.markdown("Please answer these questions to make sure you understand the group assignment process.")
-        st.info("You must answer all questions correctly to continue.")
-        
-        # Comprehension questions
-        q1 = st.radio(
-            "1. What determines whether groups are assigned by Mechanism A or Mechanism B?",
-            options=[
-                "Your trivia score",
-                "A coin flip by the computer", 
-                "Your belief about your performance",
-                "Random assignment"
-            ],
-            key="comp_q1"
-        )
-        
-        q2 = st.radio(
-            "2. What is the probability that groups reflect performance under Mechanism A?",
-            options=["55%", "75%", "85%", "95%"],
-            key="comp_q2"
-        )
-        
-        q3 = st.radio(
-            "3. Do you know which mechanism was used to assign your group?",
-            options=["Yes, I know which mechanism was used", "No, I don't know which mechanism was used"],
-            key="comp_q3"
-        )
-        
-        if st.button("📝 Check Answers", key="check_comprehension"):
-            correct_answers = [
-                "A coin flip by the computer",
-                "95%", 
-                "No, I don't know which mechanism was used"
-            ]
-            
-            user_answers = [q1, q2, q3]
-            all_correct = all(user == correct for user, correct in zip(user_answers, correct_answers))
-            
-            if all_correct:
-                st.success("✅ All correct! You understand the process.")
-                if st.button("➡️ Continue to Hiring Decisions", key="continue_to_hiring"):
-                    st.session_state.current_screen = 8
-                    st.rerun()
-            else:
-                st.error("❌ Some answers are incorrect. Please review the instructions and try again.")
-                
-                # Track attempts
-                if 'comprehension_attempts' not in st.session_state.experiment_data:
-                    st.session_state.experiment_data['comprehension_attempts'] = 0
-                st.session_state.experiment_data['comprehension_attempts'] += 1
-
-    def show_hiring_instructions(self):
-        """Instructions for hiring decisions."""
-        st.title("🎓 Phase 4: Hiring Decisions")
-        
-        self.show_progress_bar(9, 15)
-        
-        st.header("💼 Hiring Task Instructions")
-        
-        st.subheader("🎯 Your Task")
-        st.info("""
-        You will now make hiring decisions for workers from both groups:
-        
-        • Make a hiring decision for a **Top Group** member
-        • Make a hiring decision for a **Bottom Group** member
-        """)
-        
-        st.subheader("💰 How Payment Works")
-        st.success(f"""
-        If you hire a worker, your payment depends on their actual performance:
-        
-        • **High Performance worker:** {ExperimentConfig.HIGH_WORKER_REWARD} tokens
-        • **Low Performance worker:** {ExperimentConfig.LOW_WORKER_REWARD} tokens
-        • **Minus:** The hiring cost you pay
-        
-        **Starting endowment:** {ExperimentConfig.ENDOWMENT_TOKENS} tokens for each decision
-        """)
-        
-        st.subheader("🤔 What You Decide")
-        st.warning(f"""
-        For each group, you'll state the **maximum** you're willing to pay to hire a random member.
-        The computer will then draw a random hiring cost between {ExperimentConfig.BDM_MIN_VALUE} and {ExperimentConfig.BDM_MAX_VALUE} tokens.
-        
-        • If the random cost ≤ your maximum → You hire the worker and pay the random cost
-        • If the random cost > your maximum → You don't hire the worker
-        
-        **Best strategy:** State your true maximum willingness to pay!
-        """)
-        
-        if st.button("💼 Begin Hiring Decisions", key="begin_hiring"):
+        if st.button("💼 Begin Hiring Decisions", key="begin_hiring", type="primary"):
             st.session_state.current_screen = 9
             st.rerun()
 
@@ -1236,7 +1034,7 @@ class OverconfidenceExperiment:
         with col2:
             st.metric("Premium for Top Group", f"{premium:+} tokens", delta=f"{premium:+} difference")
         
-        if st.button("✅ Submit Hiring Decisions", key="submit_hiring"):
+        if st.button("✅ Submit Hiring Decisions", key="submit_hiring", type="primary"):
             st.session_state.experiment_data['wtp_top_group'] = wtp_top
             st.session_state.experiment_data['wtp_bottom_group'] = wtp_bottom
             logging.info(f"Participant {st.session_state.experiment_data['participant_id']} WTP: Top={wtp_top}, Bottom={wtp_bottom}, Premium={premium}")
@@ -1281,7 +1079,7 @@ class OverconfidenceExperiment:
         You believe there is a **{belief_mechanism}%** chance that Mechanism A (95% accurate) was used.
         """)
         
-        if st.button("✅ Submit Final Belief", key="submit_mechanism_belief"):
+        if st.button("✅ Submit Final Belief", key="submit_mechanism_belief", type="primary"):
             st.session_state.experiment_data['belief_mechanism'] = belief_mechanism
             logging.info(f"Participant {st.session_state.experiment_data['participant_id']} mechanism belief: {belief_mechanism}%")
             st.session_state.current_screen = 11
@@ -1356,7 +1154,7 @@ class OverconfidenceExperiment:
             key="data_quality"
         )
         
-        if st.button("📝 Submit Questionnaire", key="submit_questionnaire"):
+        if st.button("📝 Submit Questionnaire", key="submit_questionnaire", type="primary"):
             # Validate required fields
             required_fields = [gender, age, education, experience, difficulty, confidence_during, effort, honest, data_quality]
             if all(field != "" for field in required_fields) and len(hiring_strategy.strip()) >= 20:
@@ -1392,7 +1190,7 @@ class OverconfidenceExperiment:
                 st.error("Please complete all required fields. The hiring strategy explanation must be at least 20 characters.")
 
     def show_results(self):
-        """Completely clean results display - zero HTML."""
+        """Clean results display using native Streamlit components only."""
         st.title("🎉 Experiment Complete!")
         st.markdown("**Thank You for Participating in Our Research!**")
         
@@ -1500,7 +1298,7 @@ class OverconfidenceExperiment:
             )
         
         with col3:
-            if st.button("🔄 Start New Session", key="new_session"):
+            if st.button("🔄 Start New Session", key="new_session", type="primary"):
                 for key in list(st.session_state.keys()):
                     if key != 'database_path':
                         del st.session_state[key]
@@ -1538,7 +1336,7 @@ class OverconfidenceExperiment:
             
             col1, col2 = st.columns(2)
             with col1:
-                if st.button("🔄 Restart Experiment"):
+                if st.button("🔄 Restart Experiment", type="primary"):
                     for key in list(st.session_state.keys()):
                         del st.session_state[key]
                     st.rerun()
@@ -1546,9 +1344,12 @@ class OverconfidenceExperiment:
                 if st.button("💾 Emergency Data Save"):
                     if 'experiment_data' in st.session_state:
                         json_data = json.dumps(st.session_state.experiment_data, indent=2)
-                        b64 = base64.b64encode(json_data.encode()).decode()
-                        href = f'<a href="data:application/json;base64,{b64}" download="emergency_backup.json">💾 Download Emergency Backup</a>'
-                        st.markdown(href, unsafe_allow_html=True)
+                        st.download_button(
+                            label="💾 Download Emergency Backup",
+                            data=json_data,
+                            file_name="emergency_backup.json",
+                            mime="application/json"
+                        )
 
 def main():
     """Main application entry point - completely clean."""
@@ -1574,7 +1375,7 @@ def main():
         # Clean recovery options
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("🔄 Restart Experiment"):
+            if st.button("🔄 Restart Experiment", type="primary"):
                 for key in list(st.session_state.keys()):
                     del st.session_state[key]
                 st.rerun()
@@ -1582,7 +1383,6 @@ def main():
             if st.button("💾 Emergency Data Save"):
                 if 'experiment_data' in st.session_state:
                     json_data = json.dumps(st.session_state.experiment_data, indent=2)
-                    b64 = base64.b64encode(json_data.encode()).decode()
                     st.download_button(
                         label="💾 Download Emergency Backup",
                         data=json_data,
