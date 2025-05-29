@@ -89,98 +89,16 @@ class ExperimentConfig:
     MIN_HIRING_EXPLANATION_LENGTH = 20
     MIN_STRATEGY_EXPLANATION_LENGTH = 10
 
-# Enhanced CSS for professional research appearance
+# Enhanced CSS for professional research appearance (minimal, clean styling)
 st.markdown("""
 <style>
-    .main-header {
-        background: linear-gradient(135deg, #2c3e50, #3498db);
-        color: white;
-        padding: 1.5rem;
-        border-radius: 10px;
-        text-align: center;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    .experiment-card {
-        background-color: #f9f9f9;
-        border: 1px solid #bdc3c7;
-        padding: 2rem;
-        border-radius: 8px;
-        margin: 1rem 0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .progress-bar {
-        background-color: #ecf0f1;
-        border-radius: 15px;
-        height: 25px;
-        margin: 1rem 0;
-        overflow: hidden;
-    }
-    .progress-fill {
-        background: linear-gradient(90deg, #2ecc71, #27ae60);
-        height: 100%;
-        border-radius: 15px;
-        transition: width 0.5s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: bold;
-        font-size: 0.9em;
-    }
-    .question-container {
-        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-        border: 2px solid #dee2e6;
-        border-radius: 12px;
-        padding: 2rem;
-        margin: 1.5rem 0;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    .timer-warning {
-        background: linear-gradient(135deg, #e74c3c, #c0392b);
-        color: white;
-        padding: 1.2rem;
-        border-radius: 8px;
-        text-align: center;
-        font-weight: bold;
-        animation: pulse 1s infinite;
-        box-shadow: 0 4px 8px rgba(231,76,60,0.3);
-    }
-    .timer-normal {
-        background: linear-gradient(135deg, #f39c12, #e67e22);
-        color: white;
-        padding: 1.2rem;
-        border-radius: 8px;
-        text-align: center;
-        font-weight: bold;
-        box-shadow: 0 4px 8px rgba(243,156,18,0.3);
-    }
-    .group-display {
-        text-align: center;
-        padding: 3rem;
-        font-size: 2.5rem;
-        font-weight: bold;
-        border: 4px solid #3498db;
-        border-radius: 15px;
-        margin: 2rem 0;
-        background: linear-gradient(45deg, #f0f8ff, #e6f3ff);
-        box-shadow: 0 8px 16px rgba(52,152,219,0.2);
-        animation: groupReveal 0.8s ease-out;
-    }
-    .results-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 0.8rem 0;
-        border-bottom: 1px solid #bdc3c7;
-        font-size: 1.1em;
-    }
-    .methodology-warning {
-        background: linear-gradient(135deg, #fff3cd, #ffeaa7);
-        border: 2px solid #ffc107;
-        padding: 1.5rem;
-        border-radius: 8px;
-        margin: 1rem 0;
-    }
+    /* Hide Streamlit elements for professional appearance */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    .stDeployButton {display:none;}
+    
+    /* Clean button styling */
     .stButton > button {
         background: linear-gradient(135deg, #3498db, #2980b9);
         color: white;
@@ -190,37 +108,10 @@ st.markdown("""
         font-weight: 600;
         font-size: 1.1em;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 8px rgba(52,152,219,0.3);
     }
     .stButton > button:hover {
         background: linear-gradient(135deg, #2980b9, #1f618d);
         transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(52,152,219,0.4);
-    }
-    .comprehension-correct {
-        background: #d4edda;
-        border: 2px solid #c3e6cb;
-        color: #155724;
-        padding: 1rem;
-        border-radius: 6px;
-        margin: 0.5rem 0;
-    }
-    .comprehension-incorrect {
-        background: #f8d7da;
-        border: 2px solid #f5c6cb;
-        color: #721c24;
-        padding: 1rem;
-        border-radius: 6px;
-        margin: 0.5rem 0;
-    }
-    @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(1); }
-    }
-    @keyframes groupReveal {
-        0% { opacity: 0; transform: scale(0.8); }
-        100% { opacity: 1; transform: scale(1); }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -549,20 +440,11 @@ class OverconfidenceExperiment:
         return selected_questions
 
     def show_progress_bar(self, current_step: int, total_steps: int):
-        """Enhanced progress bar with research-grade visual feedback."""
+        """Clean progress bar without HTML artifacts."""
         progress = current_step / total_steps
-        progress_text = f"{current_step}/{total_steps}"
         
-        st.markdown(f"""
-        <div class="progress-bar">
-            <div class="progress-fill" style="width: {progress*100}%">
-                {progress_text}
-            </div>
-        </div>
-        <p style="text-align: center; color: #7f8c8d; margin-top: 0.5rem;">
-            Screen {current_step} of {total_steps} • Progress: {progress*100:.1f}%
-        </p>
-        """, unsafe_allow_html=True)
+        # Use Streamlit's native progress bar
+        st.progress(progress, text=f"Screen {current_step} of {total_steps} • Progress: {progress*100:.1f}%")
 
     def show_welcome_screen(self):
         """Enhanced welcome screen with improved research disclosure."""
@@ -696,7 +578,7 @@ class OverconfidenceExperiment:
 
     def show_treatment_assignment(self):
         """Randomly assign participants to easy or hard treatment."""
-        st.markdown('<div class="main-header"><h1>🧪 Decision-Making Research Experiment</h1></div>', unsafe_allow_html=True)
+        st.title("🎓 Behavioral Economics Research Study")
         
         self.show_progress_bar(2, 15)
         
@@ -707,31 +589,26 @@ class OverconfidenceExperiment:
             
             logging.info(f"Participant {st.session_state.experiment_data['participant_id']} assigned to {st.session_state.experiment_data['treatment']} treatment")
         
-        st.markdown("""
-        <div class="experiment-card">
-            <h2>📚 Phase 1: Trivia Questions</h2>
-            
-            <div style="background: #f0f8ff; border: 2px solid #4169e1; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-                <h4 style="color: #4169e1; margin-top: 0;">📋 Instructions</h4>
-                <p>You will now complete <strong>25 multiple-choice trivia questions</strong>.</p>
-                <ul>
-                    <li>You have <strong>6 minutes</strong> to complete all questions</li>
-                    <li>You can navigate between questions and change your answers</li>
-                    <li>A timer will show your remaining time</li>
-                    <li>Your score determines your performance classification</li>
-                </ul>
-            </div>
-            
-            <div style="background: #d4edda; border: 2px solid #c3e6cb; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-                <h4 style="color: #155724; margin-top: 0;">💰 Payment Information</h4>
-                <p style="color: #155724; margin-bottom: 0;">
-                    If this task is selected for payment:<br>
-                    <strong>Top 50% performers:</strong> {ExperimentConfig.HIGH_PERFORMANCE_TOKENS} tokens<br>
-                    <strong>Bottom 50% performers:</strong> {ExperimentConfig.LOW_PERFORMANCE_TOKENS} tokens
-                </p>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.header("📚 Phase 1: Trivia Questions")
+        
+        st.subheader("📋 Instructions")
+        st.info("""
+        You will now complete **25 multiple-choice trivia questions**.
+
+        • You have **6 minutes** to complete all questions
+        • You can navigate between questions and change your answers
+        • A timer will show your remaining time
+        • Your score determines your performance classification
+        """)
+        
+        st.subheader("💰 Payment Information")
+        st.success(f"""
+        If this task is selected for payment:
+        
+        **Top 50% performers:** {ExperimentConfig.HIGH_PERFORMANCE_TOKENS} tokens
+        
+        **Bottom 50% performers:** {ExperimentConfig.LOW_PERFORMANCE_TOKENS} tokens
+        """)
         
         if st.button("▶️ Start Trivia Questions", key="start_trivia"):
             st.session_state.trivia_start_time = time.time()
@@ -740,7 +617,7 @@ class OverconfidenceExperiment:
 
     def show_trivia_questions(self):
         """Display trivia questions with timer and navigation."""
-        st.markdown('<div class="main-header"><h1>🧪 Trivia Questions</h1></div>', unsafe_allow_html=True)
+        st.title("🧪 Trivia Questions")
         
         # Timer display
         if st.session_state.trivia_start_time:
@@ -748,11 +625,11 @@ class OverconfidenceExperiment:
             remaining_time = max(0, ExperimentConfig.TRIVIA_TIME_LIMIT - elapsed_time)
             
             if remaining_time <= 60:  # Warning in last minute
-                st.markdown(f'<div class="timer-warning">⏰ TIME WARNING: {int(remaining_time)} seconds remaining!</div>', unsafe_allow_html=True)
+                st.error(f"⏰ TIME WARNING: {int(remaining_time)} seconds remaining!")
             else:
                 minutes = int(remaining_time // 60)
                 seconds = int(remaining_time % 60)
-                st.markdown(f'<div class="timer-normal">⏱️ Time Remaining: {minutes}:{seconds:02d}</div>', unsafe_allow_html=True)
+                st.info(f"⏱️ Time Remaining: {minutes}:{seconds:02d}")
             
             # Auto-submit when time runs out
             if remaining_time <= 0:
@@ -761,7 +638,7 @@ class OverconfidenceExperiment:
         
         # Progress indicator
         self.show_progress_bar(3, 15)
-        st.markdown(f"<p style='text-align: center; margin: 1rem 0;'><strong>Question {st.session_state.current_trivia_question + 1} of {ExperimentConfig.TRIVIA_QUESTIONS_COUNT}</strong></p>", unsafe_allow_html=True)
+        st.markdown(f"**Question {st.session_state.current_trivia_question + 1} of {ExperimentConfig.TRIVIA_QUESTIONS_COUNT}**")
         
         # Current question
         current_q = st.session_state.current_trivia_question
@@ -771,12 +648,9 @@ class OverconfidenceExperiment:
         if current_q not in st.session_state.question_start_times:
             st.session_state.question_start_times[current_q] = time.time()
         
-        st.markdown(f"""
-        <div class="question-container">
-            <h3>Question {current_q + 1}</h3>
-            <p style="font-size: 1.2em; font-weight: 500; margin: 1.5rem 0;">{question_data['question']}</p>
-        </div>
-        """, unsafe_allow_html=True)
+        # Display question
+        st.subheader(f"Question {current_q + 1}")
+        st.markdown(f"**{question_data['question']}**")
         
         # Answer options
         answer_key = f"trivia_answer_{current_q}"
@@ -806,7 +680,7 @@ class OverconfidenceExperiment:
         with col2:
             # Progress display
             answered = sum(1 for a in st.session_state.experiment_data['trivia_answers'] if a is not None)
-            st.markdown(f"<p style='text-align: center;'>Answered: {answered}/{ExperimentConfig.TRIVIA_QUESTIONS_COUNT}</p>", unsafe_allow_html=True)
+            st.markdown(f"**Answered: {answered}/{ExperimentConfig.TRIVIA_QUESTIONS_COUNT}**")
         
         with col3:
             if current_q < ExperimentConfig.TRIVIA_QUESTIONS_COUNT - 1:
@@ -846,36 +720,30 @@ class OverconfidenceExperiment:
 
     def show_belief_instructions(self):
         """Instructions for belief elicitation about own performance."""
-        st.markdown('<div class="main-header"><h1>🧪 Decision-Making Research Experiment</h1></div>', unsafe_allow_html=True)
+        st.title("🎓 Behavioral Economics Research Study")
         
         self.show_progress_bar(4, 15)
         
-        st.markdown("""
-        <div class="experiment-card">
-            <h2>🧠 Phase 2: Beliefs About Your Performance</h2>
-            
-            <div style="background: #f0f8ff; border: 2px solid #4169e1; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-                <h4 style="color: #4169e1; margin-top: 0;">📊 Performance Classification</h4>
-                <p>Based on your trivia score, you will be classified as either:</p>
-                <ul>
-                    <li><strong>High Performance:</strong> Top 50% of participants in this session</li>
-                    <li><strong>Low Performance:</strong> Bottom 50% of participants in this session</li>
-                </ul>
-                <p><em>This classification will be revealed later in the experiment.</em></p>
-            </div>
-            
-            <div style="background: #d4edda; border: 2px solid #c3e6cb; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-                <h4 style="color: #155724; margin-top: 0;">💰 Payment for Accuracy</h4>
-                <p style="color: #155724;">
-                    If this question is selected for payment, you will earn tokens based on the accuracy of your belief.<br>
-                    <strong>The closer your guess to reality, the higher your payment!</strong>
-                </p>
-                <p style="color: #155724; margin-bottom: 0;">
-                    This payment mechanism rewards honest reporting of your true beliefs.
-                </p>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.header("🧠 Phase 2: Beliefs About Your Performance")
+        
+        st.subheader("📊 Performance Classification")
+        st.info("""
+        Based on your trivia score, you will be classified as either:
+        
+        • **High Performance:** Top 50% of participants in this session
+        • **Low Performance:** Bottom 50% of participants in this session
+        
+        *This classification will be revealed later in the experiment.*
+        """)
+        
+        st.subheader("💰 Payment for Accuracy")
+        st.success("""
+        If this question is selected for payment, you will earn tokens based on the accuracy of your belief.
+        
+        **The closer your guess to reality, the higher your payment!**
+        
+        This payment mechanism rewards honest reporting of your true beliefs.
+        """)
         
         if st.button("📝 Continue to Belief Question", key="continue_to_belief"):
             st.session_state.current_screen = 4
@@ -883,25 +751,19 @@ class OverconfidenceExperiment:
 
     def show_belief_own_screen(self):
         """Elicit beliefs about own performance."""
-        st.markdown('<div class="main-header"><h1>🧪 Belief About Your Performance</h1></div>', unsafe_allow_html=True)
+        st.title("🧠 Belief About Your Performance")
         
         self.show_progress_bar(5, 15)
         
-        st.markdown("""
-        <div class="experiment-card">
-            <h2>🎯 What Do You Think?</h2>
-            
-            <div style="background: #fff3cd; border: 2px solid #ffc107; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-                <h4 style="color: #856404; margin-top: 0;">❓ The Question</h4>
-                <p style="font-size: 1.3em; font-weight: 600; color: #856404;">
-                    What do you think is the probability that you are a <strong>High Performance</strong> participant?
-                </p>
-                <p style="color: #856404; margin-bottom: 0;">
-                    (Remember: High Performance = Top 50% of participants in this session)
-                </p>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.header("🎯 What Do You Think?")
+        
+        st.warning("""
+        **The Question:**
+        
+        What do you think is the probability that you are a **High Performance** participant?
+        
+        (Remember: High Performance = Top 50% of participants in this session)
+        """)
         
         belief = st.slider(
             "Your belief (as a percentage from 0% to 100%):",
@@ -912,14 +774,11 @@ class OverconfidenceExperiment:
             key="belief_own_performance"
         )
         
-        st.markdown(f"""
-        <div style="text-align: center; padding: 1.5rem; background: #e9ecef; border-radius: 8px; margin: 1rem 0;">
-            <h3 style="color: #495057;">Your Current Answer: {belief}%</h3>
-            <p style="color: #6c757d; margin-bottom: 0;">
-                You believe there is a <strong>{belief}%</strong> chance you are in the top 50% of performers.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.info(f"""
+        **Your Current Answer: {belief}%**
+        
+        You believe there is a **{belief}%** chance you are in the top 50% of performers.
+        """)
         
         if st.button("✅ Submit Belief", key="submit_belief"):
             st.session_state.experiment_data['belief_own_performance'] = belief
@@ -929,47 +788,46 @@ class OverconfidenceExperiment:
 
     def show_group_assignment_instructions(self):
         """Explain group assignment mechanism."""
-        st.markdown('<div class="main-header"><h1>🧪 Decision-Making Research Experiment</h1></div>', unsafe_allow_html=True)
+        st.title("🎓 Behavioral Economics Research Study")
         
         self.show_progress_bar(6, 15)
         
-        st.markdown("""
-        <div class="experiment-card">
-            <h2>🎲 Phase 3: Group Assignment</h2>
+        st.header("🎲 Phase 3: Group Assignment")
+        
+        st.subheader("🔄 How Groups Are Assigned")
+        st.info("""
+        You and all other participants will now be assigned to groups: **Top** or **Bottom**.
+        
+        **The computer will flip a coin to determine the assignment mechanism:**
+        
+        • **If HEADS:** 95% chance your group reflects your performance + 5% chance it doesn't
+        • **If TAILS:** 55% chance your group reflects your performance + 45% chance it doesn't
+        """)
+        
+        st.subheader("🎯 What This Means")
+        st.warning("""
+        **"Reflects performance" means:**
+        • High Performance → Top Group
+        • Low Performance → Bottom Group
+        
+        *You will see your group assignment but NOT the coin flip result.*
+        """)
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.success("""
+            **🥇 Mechanism A (95% Accurate)**
             
-            <div style="background: #f0f8ff; border: 2px solid #4169e1; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-                <h4 style="color: #4169e1; margin-top: 0;">🔄 How Groups Are Assigned</h4>
-                <p>You and all other participants will now be assigned to groups: <strong>Top</strong> or <strong>Bottom</strong>.</p>
-                
-                <p><strong>The computer will flip a coin to determine the assignment mechanism:</strong></p>
-                <ul>
-                    <li><strong>If HEADS:</strong> 95% chance your group reflects your performance + 5% chance it doesn't</li>
-                    <li><strong>If TAILS:</strong> 55% chance your group reflects your performance + 45% chance it doesn't</li>
-                </ul>
-            </div>
+            Groups are highly likely to reflect actual performance
+            """)
+        
+        with col2:
+            st.error("""
+            **🎲 Mechanism B (55% Accurate)**
             
-            <div style="background: #fff3cd; border: 2px solid #ffc107; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-                <h4 style="color: #856404; margin-top: 0;">🎯 What This Means</h4>
-                <p><strong>"Reflects performance"</strong> means:</p>
-                <ul style="color: #856404;">
-                    <li>High Performance → Top Group</li>
-                    <li>Low Performance → Bottom Group</li>
-                </ul>
-                <p style="margin-bottom: 0;"><em>You will see your group assignment but NOT the coin flip result.</em></p>
-            </div>
-            
-            <div style="display: flex; gap: 1rem; margin: 1.5rem 0;">
-                <div style="flex: 1; padding: 1.5rem; background: #d4edda; border: 2px solid #c3e6cb; border-radius: 10px;">
-                    <h4 style="color: #155724; margin-top: 0;">🥇 Mechanism A (95% Accurate)</h4>
-                    <p style="color: #155724; margin-bottom: 0;">Groups are highly likely to reflect actual performance</p>
-                </div>
-                <div style="flex: 1; padding: 1.5rem; background: #f8d7da; border: 2px solid #f5c6cb; border-radius: 10px;">
-                    <h4 style="color: #721c24; margin-top: 0;">🎲 Mechanism B (55% Accurate)</h4>
-                    <p style="color: #721c24; margin-bottom: 0;">Groups are only mildly likely to reflect performance</p>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+            Groups are only mildly likely to reflect performance
+            """)
         
         if st.button("🎲 Proceed to Group Assignment", key="proceed_to_assignment"):
             st.session_state.current_screen = 6
@@ -977,7 +835,7 @@ class OverconfidenceExperiment:
 
     def show_group_assignment(self):
         """Show group assignment result."""
-        st.markdown('<div class="main-header"><h1>🧪 Your Group Assignment</h1></div>', unsafe_allow_html=True)
+        st.title("🏷️ Your Group Assignment")
         
         self.show_progress_bar(7, 15)
         
@@ -1001,28 +859,22 @@ class OverconfidenceExperiment:
             logging.info(f"Participant {st.session_state.experiment_data['participant_id']} assigned to {assigned_group} group via mechanism {mechanism}")
         
         group = st.session_state.experiment_data['assigned_group']
-        group_color = "#2ecc71" if group == "Top" else "#e67e22"
         
+        # Clean group display
+        if group == "Top":
+            st.success(f"## 🥇 You have been assigned to the **{group} Group**")
+        else:
+            st.info(f"## 🥈 You have been assigned to the **{group} Group**")
+        
+        st.subheader("🔍 What You Know")
         st.markdown(f"""
-        <div class="group-display" style="border-color: {group_color};">
-            🏷️ You have been assigned to the<br>
-            <span style="color: {group_color}; font-size: 3rem;">{group} Group</span>
-        </div>
-        """, unsafe_allow_html=True)
+        **Information available to you:**
+        - Your group assignment: **{group} Group**
+        - The computer flipped a coin to choose the mechanism
+        - Your group either reflects your performance or it doesn't
         
-        st.markdown("""
-        <div class="experiment-card">
-            <div style="background: #e9ecef; border: 2px solid #6c757d; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-                <h4 style="color: #495057; margin-top: 0;">🔍 What You Know</h4>
-                <ul style="color: #495057;">
-                    <li>Your group assignment: <strong>{}</strong></li>
-                    <li>The computer flipped a coin to choose the mechanism</li>
-                    <li>Your group either reflects your performance or it doesn't</li>
-                </ul>
-                <p style="color: #495057; margin-bottom: 0;"><strong>You do NOT know:</strong> Which mechanism was used or whether your group reflects your performance</p>
-            </div>
-        </div>
-        """.format(group), unsafe_allow_html=True)
+        **You do NOT know:** Which mechanism was used or whether your group reflects your performance
+        """)
         
         if st.button("➡️ Continue to Next Phase", key="continue_after_assignment"):
             st.session_state.current_screen = 7
@@ -1030,17 +882,13 @@ class OverconfidenceExperiment:
 
     def show_comprehension_questions(self):
         """Show comprehension questions to ensure understanding."""
-        st.markdown('<div class="main-header"><h1>🧪 Comprehension Check</h1></div>', unsafe_allow_html=True)
+        st.title("✅ Comprehension Check")
         
         self.show_progress_bar(8, 15)
         
-        st.markdown("""
-        <div class="experiment-card">
-            <h2>✅ Understanding Check</h2>
-            <p>Please answer these questions to make sure you understand the group assignment process.</p>
-            <p><em>You must answer all questions correctly to continue.</em></p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.header("Understanding Check")
+        st.markdown("Please answer these questions to make sure you understand the group assignment process.")
+        st.info("You must answer all questions correctly to continue.")
         
         # Comprehension questions
         q1 = st.radio(
@@ -1077,12 +925,12 @@ class OverconfidenceExperiment:
             all_correct = all(user == correct for user, correct in zip(user_answers, correct_answers))
             
             if all_correct:
-                st.markdown('<div class="comprehension-correct">✅ All correct! You understand the process.</div>', unsafe_allow_html=True)
+                st.success("✅ All correct! You understand the process.")
                 if st.button("➡️ Continue to Hiring Decisions", key="continue_to_hiring"):
                     st.session_state.current_screen = 8
                     st.rerun()
             else:
-                st.markdown('<div class="comprehension-incorrect">❌ Some answers are incorrect. Please review the instructions and try again.</div>', unsafe_allow_html=True)
+                st.error("❌ Some answers are incorrect. Please review the instructions and try again.")
                 
                 # Track attempts
                 if 'comprehension_attempts' not in st.session_state.experiment_data:
@@ -1091,52 +939,271 @@ class OverconfidenceExperiment:
 
     def show_hiring_instructions(self):
         """Instructions for hiring decisions."""
-        st.markdown('<div class="main-header"><h1>🧪 Phase 4: Hiring Decisions</h1></div>', unsafe_allow_html=True)
+        st.title("🎓 Phase 4: Hiring Decisions")
         
         self.show_progress_bar(9, 15)
         
+        st.header("💼 Hiring Task Instructions")
+        
+        st.subheader("🎯 Your Task")
+        st.info("""
+        You will now make hiring decisions for workers from both groups:
+        
+        • Make a hiring decision for a **Top Group** member
+        • Make a hiring decision for a **Bottom Group** member
+        """)
+        
+        st.subheader("💰 How Payment Works")
+        st.success(f"""
+        If you hire a worker, your payment depends on their actual performance:
+        
+        • **High Performance worker:** {ExperimentConfig.HIGH_WORKER_REWARD} tokens
+        • **Low Performance worker:** {ExperimentConfig.LOW_WORKER_REWARD} tokens
+        • **Minus:** The hiring cost you pay
+        
+        **Starting endowment:** {ExperimentConfig.ENDOWMENT_TOKENS} tokens for each decision
+        """)
+        
+        st.subheader("🤔 What You Decide")
+        st.warning(f"""
+        For each group, you'll state the **maximum** you're willing to pay to hire a random member.
+        The computer will then draw a random hiring cost between {ExperimentConfig.BDM_MIN_VALUE} and {ExperimentConfig.BDM_MAX_VALUE} tokens.
+        
+        • If the random cost ≤ your maximum → You hire the worker and pay the random cost
+        • If the random cost > your maximum → You don't hire the worker
+        
+        **Best strategy:** State your true maximum willingness to pay!
+        """)
+        
+        if st.button("💼 Begin Hiring Decisions", key="begin_hiring"):
+            st.session_state.current_screen = 9
+            st.rerun()
+
+    def show_belief_own_screen(self):
+        """Elicit beliefs about own performance."""
+        st.title("🧠 Belief About Your Performance")
+        
+        self.show_progress_bar(5, 15)
+        
+        st.header("🎯 What Do You Think?")
+        
+        st.warning("""
+        **The Question:**
+        
+        What do you think is the probability that you are a **High Performance** participant?
+        
+        (Remember: High Performance = Top 50% of participants in this session)
+        """)
+        
+        belief = st.slider(
+            "Your belief (as a percentage from 0% to 100%):",
+            min_value=0,
+            max_value=100,
+            value=50,
+            step=1,
+            key="belief_own_performance"
+        )
+        
+        st.info(f"""
+        **Your Current Answer: {belief}%**
+        
+        You believe there is a **{belief}%** chance you are in the top 50% of performers.
+        """)
+        
+        if st.button("✅ Submit Belief", key="submit_belief"):
+            st.session_state.experiment_data['belief_own_performance'] = belief
+            logging.info(f"Participant {st.session_state.experiment_data['participant_id']} belief: {belief}%")
+            st.session_state.current_screen = 5
+            st.rerun()
+
+    def show_group_assignment_instructions(self):
+        """Explain group assignment mechanism."""
+        st.title("🎓 Behavioral Economics Research Study")
+        
+        self.show_progress_bar(6, 15)
+        
+        st.header("🎲 Phase 3: Group Assignment")
+        
+        st.subheader("🔄 How Groups Are Assigned")
+        st.info("""
+        You and all other participants will now be assigned to groups: **Top** or **Bottom**.
+        
+        **The computer will flip a coin to determine the assignment mechanism:**
+        
+        • **If HEADS:** 95% chance your group reflects your performance + 5% chance it doesn't
+        • **If TAILS:** 55% chance your group reflects your performance + 45% chance it doesn't
+        """)
+        
+        st.subheader("🎯 What This Means")
+        st.warning("""
+        **"Reflects performance" means:**
+        • High Performance → Top Group
+        • Low Performance → Bottom Group
+        
+        *You will see your group assignment but NOT the coin flip result.*
+        """)
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.success("""
+            **🥇 Mechanism A (95% Accurate)**
+            
+            Groups are highly likely to reflect actual performance
+            """)
+        
+        with col2:
+            st.error("""
+            **🎲 Mechanism B (55% Accurate)**
+            
+            Groups are only mildly likely to reflect performance
+            """)
+        
+        if st.button("🎲 Proceed to Group Assignment", key="proceed_to_assignment"):
+            st.session_state.current_screen = 6
+            st.rerun()
+
+    def show_group_assignment(self):
+        """Show group assignment result."""
+        st.title("🏷️ Your Group Assignment")
+        
+        self.show_progress_bar(7, 15)
+        
+        if st.session_state.experiment_data['assigned_group'] is None:
+            # Simulate mechanism selection and group assignment
+            mechanism = random.choice(['A', 'B'])
+            accuracy = ExperimentConfig.MECHANISM_A_ACCURACY if mechanism == 'A' else ExperimentConfig.MECHANISM_B_ACCURACY
+            
+            # Determine if assignment reflects performance
+            reflects_performance = random.random() < accuracy
+            
+            if reflects_performance:
+                assigned_group = 'Top' if st.session_state.experiment_data['performance_level'] == 'High' else 'Bottom'
+            else:
+                assigned_group = 'Bottom' if st.session_state.experiment_data['performance_level'] == 'High' else 'Top'
+            
+            st.session_state.experiment_data['mechanism_used'] = mechanism
+            st.session_state.experiment_data['mechanism_reflects_performance'] = reflects_performance
+            st.session_state.experiment_data['assigned_group'] = assigned_group
+            
+            logging.info(f"Participant {st.session_state.experiment_data['participant_id']} assigned to {assigned_group} group via mechanism {mechanism}")
+        
+        group = st.session_state.experiment_data['assigned_group']
+        
+        # Clean group display
+        if group == "Top":
+            st.success(f"## 🥇 You have been assigned to the **{group} Group**")
+        else:
+            st.info(f"## 🥈 You have been assigned to the **{group} Group**")
+        
+        st.subheader("🔍 What You Know")
         st.markdown(f"""
-        <div class="experiment-card">
-            <h2>💼 Hiring Task Instructions</h2>
+        **Information available to you:**
+        - Your group assignment: **{group} Group**
+        - The computer flipped a coin to choose the mechanism
+        - Your group either reflects your performance or it doesn't
+        
+        **You do NOT know:** Which mechanism was used or whether your group reflects your performance
+        """)
+        
+        if st.button("➡️ Continue to Next Phase", key="continue_after_assignment"):
+            st.session_state.current_screen = 7
+            st.rerun()
+
+    def show_comprehension_questions(self):
+        """Show comprehension questions to ensure understanding."""
+        st.title("✅ Comprehension Check")
+        
+        self.show_progress_bar(8, 15)
+        
+        st.header("Understanding Check")
+        st.markdown("Please answer these questions to make sure you understand the group assignment process.")
+        st.info("You must answer all questions correctly to continue.")
+        
+        # Comprehension questions
+        q1 = st.radio(
+            "1. What determines whether groups are assigned by Mechanism A or Mechanism B?",
+            options=[
+                "Your trivia score",
+                "A coin flip by the computer", 
+                "Your belief about your performance",
+                "Random assignment"
+            ],
+            key="comp_q1"
+        )
+        
+        q2 = st.radio(
+            "2. What is the probability that groups reflect performance under Mechanism A?",
+            options=["55%", "75%", "85%", "95%"],
+            key="comp_q2"
+        )
+        
+        q3 = st.radio(
+            "3. Do you know which mechanism was used to assign your group?",
+            options=["Yes, I know which mechanism was used", "No, I don't know which mechanism was used"],
+            key="comp_q3"
+        )
+        
+        if st.button("📝 Check Answers", key="check_comprehension"):
+            correct_answers = [
+                "A coin flip by the computer",
+                "95%", 
+                "No, I don't know which mechanism was used"
+            ]
             
-            <div style="background: #f0f8ff; border: 2px solid #4169e1; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-                <h4 style="color: #4169e1; margin-top: 0;">🎯 Your Task</h4>
-                <p>You will now make hiring decisions for workers from both groups:</p>
-                <ul>
-                    <li>Make a hiring decision for a <strong>Top Group</strong> member</li>
-                    <li>Make a hiring decision for a <strong>Bottom Group</strong> member</li>
-                </ul>
-            </div>
+            user_answers = [q1, q2, q3]
+            all_correct = all(user == correct for user, correct in zip(user_answers, correct_answers))
             
-            <div style="background: #d4edda; border: 2px solid #c3e6cb; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-                <h4 style="color: #155724; margin-top: 0;">💰 How Payment Works</h4>
-                <p style="color: #155724;">If you hire a worker, your payment depends on their actual performance:</p>
-                <ul style="color: #155724;">
-                    <li><strong>High Performance worker:</strong> {ExperimentConfig.HIGH_WORKER_REWARD} tokens</li>
-                    <li><strong>Low Performance worker:</strong> {ExperimentConfig.LOW_WORKER_REWARD} tokens</li>
-                    <li><strong>Minus:</strong> The hiring cost you pay</li>
-                </ul>
-                <p style="color: #155724; margin-bottom: 0;">
-                    <strong>Starting endowment:</strong> {ExperimentConfig.ENDOWMENT_TOKENS} tokens for each decision
-                </p>
-            </div>
-            
-            <div style="background: #fff3cd; border: 2px solid #ffc107; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-                <h4 style="color: #856404; margin-top: 0;">🤔 What You Decide</h4>
-                <p style="color: #856404;">
-                    For each group, you'll state the <strong>maximum</strong> you're willing to pay to hire a random member.
-                    The computer will then draw a random hiring cost between {ExperimentConfig.BDM_MIN_VALUE} and {ExperimentConfig.BDM_MAX_VALUE} tokens.
-                </p>
-                <ul style="color: #856404;">
-                    <li>If the random cost ≤ your maximum → You hire the worker and pay the random cost</li>
-                    <li>If the random cost > your maximum → You don't hire the worker</li>
-                </ul>
-                <p style="color: #856404; margin-bottom: 0;">
-                    <strong>Best strategy:</strong> State your true maximum willingness to pay!
-                </p>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+            if all_correct:
+                st.success("✅ All correct! You understand the process.")
+                if st.button("➡️ Continue to Hiring Decisions", key="continue_to_hiring"):
+                    st.session_state.current_screen = 8
+                    st.rerun()
+            else:
+                st.error("❌ Some answers are incorrect. Please review the instructions and try again.")
+                
+                # Track attempts
+                if 'comprehension_attempts' not in st.session_state.experiment_data:
+                    st.session_state.experiment_data['comprehension_attempts'] = 0
+                st.session_state.experiment_data['comprehension_attempts'] += 1
+
+    def show_hiring_instructions(self):
+        """Instructions for hiring decisions."""
+        st.title("🎓 Phase 4: Hiring Decisions")
+        
+        self.show_progress_bar(9, 15)
+        
+        st.header("💼 Hiring Task Instructions")
+        
+        st.subheader("🎯 Your Task")
+        st.info("""
+        You will now make hiring decisions for workers from both groups:
+        
+        • Make a hiring decision for a **Top Group** member
+        • Make a hiring decision for a **Bottom Group** member
+        """)
+        
+        st.subheader("💰 How Payment Works")
+        st.success(f"""
+        If you hire a worker, your payment depends on their actual performance:
+        
+        • **High Performance worker:** {ExperimentConfig.HIGH_WORKER_REWARD} tokens
+        • **Low Performance worker:** {ExperimentConfig.LOW_WORKER_REWARD} tokens
+        • **Minus:** The hiring cost you pay
+        
+        **Starting endowment:** {ExperimentConfig.ENDOWMENT_TOKENS} tokens for each decision
+        """)
+        
+        st.subheader("🤔 What You Decide")
+        st.warning(f"""
+        For each group, you'll state the **maximum** you're willing to pay to hire a random member.
+        The computer will then draw a random hiring cost between {ExperimentConfig.BDM_MIN_VALUE} and {ExperimentConfig.BDM_MAX_VALUE} tokens.
+        
+        • If the random cost ≤ your maximum → You hire the worker and pay the random cost
+        • If the random cost > your maximum → You don't hire the worker
+        
+        **Best strategy:** State your true maximum willingness to pay!
+        """)
         
         if st.button("💼 Begin Hiring Decisions", key="begin_hiring"):
             st.session_state.current_screen = 9
@@ -1144,19 +1211,15 @@ class OverconfidenceExperiment:
 
     def show_hiring_decisions(self):
         """Elicit willingness to pay for top and bottom group members."""
-        st.markdown('<div class="main-header"><h1>💼 Hiring Decisions</h1></div>', unsafe_allow_html=True)
+        st.title("💼 Hiring Decisions")
         
         self.show_progress_bar(10, 15)
         
-        st.markdown("""
-        <div class="experiment-card">
-            <h2>💼 Make Your Hiring Decisions</h2>
-            <p>State your maximum willingness to pay for a randomly selected member of each group.</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.header("💼 Make Your Hiring Decisions")
+        st.markdown("State your maximum willingness to pay for a randomly selected member of each group.")
         
         # Top group hiring decision
-        st.markdown("### 🥇 Hiring from Top Group")
+        st.subheader("🥇 Hiring from Top Group")
         wtp_top = st.slider(
             f"Maximum willing to pay for a Top Group member (0-{ExperimentConfig.BDM_MAX_VALUE} tokens):",
             min_value=ExperimentConfig.BDM_MIN_VALUE,
@@ -1167,7 +1230,7 @@ class OverconfidenceExperiment:
         )
         
         # Bottom group hiring decision  
-        st.markdown("### 🥈 Hiring from Bottom Group")
+        st.subheader("🥈 Hiring from Bottom Group")
         wtp_bottom = st.slider(
             f"Maximum willing to pay for a Bottom Group member (0-{ExperimentConfig.BDM_MAX_VALUE} tokens):",
             min_value=ExperimentConfig.BDM_MIN_VALUE,
@@ -1179,23 +1242,16 @@ class OverconfidenceExperiment:
         
         # Summary
         premium = wtp_top - wtp_bottom
-        st.markdown(f"""
-        <div style="background: #e9ecef; border: 2px solid #6c757d; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-            <h4 style="color: #495057; margin-top: 0;">📊 Your Decisions Summary</h4>
-            <div style="display: flex; justify-content: space-between; margin: 0.5rem 0;">
-                <span><strong>Top Group WTP:</strong></span>
-                <span>{wtp_top} tokens</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin: 0.5rem 0;">
-                <span><strong>Bottom Group WTP:</strong></span>
-                <span>{wtp_bottom} tokens</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin: 0.5rem 0; font-weight: bold; border-top: 1px solid #6c757d; padding-top: 0.5rem;">
-                <span><strong>Premium for Top Group:</strong></span>
-                <span>{premium:+} tokens</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        
+        st.subheader("📊 Your Decisions Summary")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.metric("Top Group WTP", f"{wtp_top} tokens")
+            st.metric("Bottom Group WTP", f"{wtp_bottom} tokens")
+        
+        with col2:
+            st.metric("Premium for Top Group", f"{premium:+} tokens", delta=f"{premium:+} difference")
         
         if st.button("✅ Submit Hiring Decisions", key="submit_hiring"):
             st.session_state.experiment_data['wtp_top_group'] = wtp_top
@@ -1206,34 +1262,26 @@ class OverconfidenceExperiment:
 
     def show_mechanism_belief(self):
         """Elicit beliefs about which mechanism was used."""
-        st.markdown('<div class="main-header"><h1>🤔 Final Belief Question</h1></div>', unsafe_allow_html=True)
+        st.title("🤔 Final Belief Question")
         
         self.show_progress_bar(11, 15)
         
-        st.markdown("""
-        <div class="experiment-card">
-            <h2>🎲 Belief About Group Assignment</h2>
-            
-            <div style="background: #fff3cd; border: 2px solid #ffc107; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-                <h4 style="color: #856404; margin-top: 0;">❓ Final Question</h4>
-                <p style="font-size: 1.2em; font-weight: 600; color: #856404;">
-                    What do you think is the probability that <strong>Mechanism A</strong> (95% accurate) was used to assign groups?
-                </p>
-                <p style="color: #856404; margin-bottom: 0;">
-                    Remember: The computer flipped a coin with 50% chance for each mechanism.
-                </p>
-            </div>
-            
-            <div style="background: #e9ecef; border: 2px solid #6c757d; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-                <h4 style="color: #495057; margin-top: 0;">🔄 Reminder</h4>
-                <ul style="color: #495057;">
-                    <li><strong>Mechanism A:</strong> 95% chance groups reflect performance</li>
-                    <li><strong>Mechanism B:</strong> 55% chance groups reflect performance</li>
-                    <li><strong>Your group:</strong> {st.session_state.experiment_data['assigned_group']} Group</li>
-                </ul>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.header("🎲 Belief About Group Assignment")
+        
+        st.warning("""
+        **Final Question**
+        
+        What do you think is the probability that **Mechanism A** (95% accurate) was used to assign groups?
+        
+        Remember: The computer flipped a coin with 50% chance for each mechanism.
+        """)
+        
+        st.subheader("🔄 Reminder")
+        st.markdown(f"""
+        - **Mechanism A:** 95% chance groups reflect performance
+        - **Mechanism B:** 55% chance groups reflect performance
+        - **Your group:** {st.session_state.experiment_data['assigned_group']} Group
+        """)
         
         belief_mechanism = st.slider(
             "Probability that Mechanism A was used (0% to 100%):",
@@ -1244,14 +1292,11 @@ class OverconfidenceExperiment:
             key="belief_mechanism"
         )
         
-        st.markdown(f"""
-        <div style="text-align: center; padding: 1.5rem; background: #e9ecef; border-radius: 8px; margin: 1rem 0;">
-            <h3 style="color: #495057;">Your Belief: {belief_mechanism}%</h3>
-            <p style="color: #6c757d; margin-bottom: 0;">
-                You believe there is a <strong>{belief_mechanism}%</strong> chance that Mechanism A (95% accurate) was used.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.info(f"""
+        **Your Belief: {belief_mechanism}%**
+        
+        You believe there is a **{belief_mechanism}%** chance that Mechanism A (95% accurate) was used.
+        """)
         
         if st.button("✅ Submit Final Belief", key="submit_mechanism_belief"):
             st.session_state.experiment_data['belief_mechanism'] = belief_mechanism
@@ -1261,19 +1306,15 @@ class OverconfidenceExperiment:
 
     def show_questionnaire(self):
         """Post-experiment questionnaire."""
-        st.markdown('<div class="main-header"><h1>📝 Post-Experiment Questionnaire</h1></div>', unsafe_allow_html=True)
+        st.title("📝 Post-Experiment Questionnaire")
         
         self.show_progress_bar(12, 15)
         
-        st.markdown("""
-        <div class="experiment-card">
-            <h2>📊 Final Questions</h2>
-            <p>Please answer these questions about your experience and background.</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.header("📊 Final Questions")
+        st.markdown("Please answer these questions about your experience and background.")
         
         # Demographics
-        st.markdown("### 👤 Demographics")
+        st.subheader("👤 Demographics")
         
         col1, col2 = st.columns(2)
         with col1:
@@ -1285,7 +1326,7 @@ class OverconfidenceExperiment:
             experience = st.selectbox("Previous experiment experience:", ["", "None", "1-2 times", "3-5 times", "More than 5 times"], key="demo_experience")
         
         # Task perception
-        st.markdown("### 🎯 Task Perception")
+        st.subheader("🎯 Task Perception")
         
         difficulty = st.select_slider(
             "How difficult did you find the trivia questions?",
@@ -1309,7 +1350,7 @@ class OverconfidenceExperiment:
         )
         
         # Decision making
-        st.markdown("### 💼 Decision Making")
+        st.subheader("💼 Decision Making")
         
         hiring_strategy = st.text_area(
             "What factors influenced your hiring decisions? Please explain your reasoning:",
@@ -1318,7 +1359,7 @@ class OverconfidenceExperiment:
         )
         
         # Validation questions
-        st.markdown("### ✅ Validation")
+        st.subheader("✅ Validation")
         
         honest = st.selectbox(
             "Did you answer all questions honestly?",
@@ -1368,8 +1409,9 @@ class OverconfidenceExperiment:
                 st.error("Please complete all required fields. The hiring strategy explanation must be at least 20 characters.")
 
     def show_results(self):
-        """Enhanced results display with comprehensive research analytics."""
-        st.markdown('<div class="main-header"><h1>🧪 Experiment Complete!</h1><h2>🎉 Thank You for Participating</h2></div>', unsafe_allow_html=True)
+        """Clean results display without HTML artifacts."""
+        st.title("🎉 Experiment Complete!")
+        st.markdown("**Thank You for Participating in Our Research!**")
         
         self.show_progress_bar(15, 15)
         
@@ -1392,29 +1434,24 @@ class OverconfidenceExperiment:
         col1, col2 = st.columns(2)
         
         with col1:
-            st.markdown("### 📊 Your Experimental Results")
+            st.subheader("📊 Your Experimental Results")
             
-            results_html = f"""
-            <div class="experiment-card">
-                <h4 style="color: #2c3e50; margin-bottom: 1rem;">🔬 Treatment & Performance</h4>
-                <div class="results-item"><span><strong>Treatment:</strong></span><span>{'Easy Questions' if data['treatment'] == 'easy' else 'Hard Questions'}</span></div>
-                <div class="results-item"><span><strong>Trivia Score:</strong></span><span>{data['trivia_score']}/{ExperimentConfig.TRIVIA_QUESTIONS_COUNT} ({data.get('accuracy_rate', 0):.1f}%)</span></div>
-                <div class="results-item"><span><strong>Performance Level:</strong></span><span>{data['performance_level']} Performance</span></div>
-                <div class="results-item"><span><strong>Assigned Group:</strong></span><span>{data['assigned_group']} Group</span></div>
-                
-                <h4 style="color: #2c3e50; margin: 1.5rem 0 1rem 0;">🧠 Beliefs & Decisions</h4>
-                <div class="results-item"><span><strong>Belief Own Performance:</strong></span><span>{data['belief_own_performance']}%</span></div>
-                <div class="results-item"><span><strong>WTP Top Group:</strong></span><span>{data['wtp_top_group']} tokens</span></div>
-                <div class="results-item"><span><strong>WTP Bottom Group:</strong></span><span>{data['wtp_bottom_group']} tokens</span></div>
-                <div class="results-item"><span><strong>WTP Premium:</strong></span><span>{wtp_premium:+} tokens</span></div>
-                <div class="results-item"><span><strong>Belief Mechanism A:</strong></span><span>{data['belief_mechanism']}%</span></div>
-                <div class="results-item"><span><strong>Overconfidence:</strong></span><span>{overconfidence_measure:+.3f}</span></div>
-            </div>
-            """
-            st.markdown(results_html, unsafe_allow_html=True)
+            st.markdown("**🔬 Treatment & Performance**")
+            st.markdown(f"**Treatment:** {'Easy Questions' if data['treatment'] == 'easy' else 'Hard Questions'}")
+            st.markdown(f"**Trivia Score:** {data['trivia_score']}/{ExperimentConfig.TRIVIA_QUESTIONS_COUNT} ({data.get('accuracy_rate', 0):.1f}%)")
+            st.markdown(f"**Performance Level:** {data['performance_level']} Performance")
+            st.markdown(f"**Assigned Group:** {data['assigned_group']} Group")
+            
+            st.markdown("**🧠 Beliefs & Decisions**")
+            st.markdown(f"**Belief Own Performance:** {data['belief_own_performance']}%")
+            st.markdown(f"**WTP Top Group:** {data['wtp_top_group']} tokens")
+            st.markdown(f"**WTP Bottom Group:** {data['wtp_bottom_group']} tokens")
+            st.markdown(f"**WTP Premium:** {wtp_premium:+} tokens")
+            st.markdown(f"**Belief Mechanism A:** {data['belief_mechanism']}%")
+            st.markdown(f"**Overconfidence Measure:** {overconfidence_measure:+.3f}")
         
         with col2:
-            st.markdown("### 💰 Payment Calculation")
+            st.subheader("💰 Payment Calculation")
             
             # Payment simulation
             selected_task = random.choice(['Trivia Performance', 'Belief Own Performance', 'Hiring Decision'])
@@ -1427,20 +1464,16 @@ class OverconfidenceExperiment:
             token_value = tokens_earned * ExperimentConfig.TOKEN_TO_DOLLAR_RATE
             total_payment = ExperimentConfig.SHOW_UP_FEE + token_value
             
-            payment_html = f"""
-            <div class="experiment-card">
-                <h4 style="color: #2c3e50; margin-bottom: 1rem;">💵 Payment Breakdown</h4>
-                <div class="results-item"><span><strong>Show-up fee:</strong></span><span>${ExperimentConfig.SHOW_UP_FEE:.2f}</span></div>
-                <div class="results-item"><span><strong>Selected task:</strong></span><span>{selected_task}</span></div>
-                <div class="results-item"><span><strong>Tokens earned:</strong></span><span>{tokens_earned}</span></div>
-                <div class="results-item"><span><strong>Token value:</strong></span><span>${token_value:.2f}</span></div>
-                <div class="results-item" style="background: #d4edda; padding: 1rem; border-radius: 6px; font-weight: bold; font-size: 1.2em; margin-top: 1rem;"><span><strong>Total Payment:</strong></span><span>${total_payment:.2f}</span></div>
-            </div>
-            """
-            st.markdown(payment_html, unsafe_allow_html=True)
+            st.markdown("**💵 Payment Breakdown**")
+            st.markdown(f"**Show-up fee:** ${ExperimentConfig.SHOW_UP_FEE:.2f}")
+            st.markdown(f"**Selected task:** {selected_task}")
+            st.markdown(f"**Tokens earned:** {tokens_earned}")
+            st.markdown(f"**Token value:** ${token_value:.2f}")
+            
+            st.success(f"**Total Payment: ${total_payment:.2f}**")
         
         # Data export options
-        st.markdown("### 📥 Research Data Export")
+        st.subheader("📥 Research Data Export")
         
         col1, col2, col3 = st.columns(3)
         
