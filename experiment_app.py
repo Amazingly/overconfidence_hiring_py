@@ -89,30 +89,13 @@ class ExperimentConfig:
     MIN_HIRING_EXPLANATION_LENGTH = 20
     MIN_STRATEGY_EXPLANATION_LENGTH = 10
 
-# Enhanced CSS for professional research appearance (minimal, clean styling)
+# Minimal CSS for professional appearance only
 st.markdown("""
 <style>
-    /* Hide Streamlit elements for professional appearance */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     .stDeployButton {display:none;}
-    
-    /* Clean button styling */
-    .stButton > button {
-        background: linear-gradient(135deg, #3498db, #2980b9);
-        color: white;
-        border: none;
-        padding: 0.8rem 2rem;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 1.1em;
-        transition: all 0.3s ease;
-    }
-    .stButton > button:hover {
-        background: linear-gradient(135deg, #2980b9, #1f618d);
-        transform: translateY(-2px);
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1409,7 +1392,7 @@ class OverconfidenceExperiment:
                 st.error("Please complete all required fields. The hiring strategy explanation must be at least 20 characters.")
 
     def show_results(self):
-        """Clean results display without HTML artifacts."""
+        """Completely clean results display - zero HTML."""
         st.title("🎉 Experiment Complete!")
         st.markdown("**Thank You for Participating in Our Research!**")
         
@@ -1437,18 +1420,18 @@ class OverconfidenceExperiment:
             st.subheader("📊 Your Experimental Results")
             
             st.markdown("**🔬 Treatment & Performance**")
-            st.markdown(f"**Treatment:** {'Easy Questions' if data['treatment'] == 'easy' else 'Hard Questions'}")
-            st.markdown(f"**Trivia Score:** {data['trivia_score']}/{ExperimentConfig.TRIVIA_QUESTIONS_COUNT} ({data.get('accuracy_rate', 0):.1f}%)")
-            st.markdown(f"**Performance Level:** {data['performance_level']} Performance")
-            st.markdown(f"**Assigned Group:** {data['assigned_group']} Group")
+            st.write(f"**Treatment:** {'Easy Questions' if data['treatment'] == 'easy' else 'Hard Questions'}")
+            st.write(f"**Trivia Score:** {data['trivia_score']}/{ExperimentConfig.TRIVIA_QUESTIONS_COUNT} ({data.get('accuracy_rate', 0):.1f}%)")
+            st.write(f"**Performance Level:** {data['performance_level']} Performance")
+            st.write(f"**Assigned Group:** {data['assigned_group']} Group")
             
             st.markdown("**🧠 Beliefs & Decisions**")
-            st.markdown(f"**Belief Own Performance:** {data['belief_own_performance']}%")
-            st.markdown(f"**WTP Top Group:** {data['wtp_top_group']} tokens")
-            st.markdown(f"**WTP Bottom Group:** {data['wtp_bottom_group']} tokens")
-            st.markdown(f"**WTP Premium:** {wtp_premium:+} tokens")
-            st.markdown(f"**Belief Mechanism A:** {data['belief_mechanism']}%")
-            st.markdown(f"**Overconfidence Measure:** {overconfidence_measure:+.3f}")
+            st.write(f"**Belief Own Performance:** {data['belief_own_performance']}%")
+            st.write(f"**WTP Top Group:** {data['wtp_top_group']} tokens")
+            st.write(f"**WTP Bottom Group:** {data['wtp_bottom_group']} tokens")
+            st.write(f"**WTP Premium:** {wtp_premium:+} tokens")
+            st.write(f"**Belief Mechanism A:** {data['belief_mechanism']}%")
+            st.write(f"**Overconfidence Measure:** {overconfidence_measure:+.3f}")
         
         with col2:
             st.subheader("💰 Payment Calculation")
@@ -1465,49 +1448,56 @@ class OverconfidenceExperiment:
             total_payment = ExperimentConfig.SHOW_UP_FEE + token_value
             
             st.markdown("**💵 Payment Breakdown**")
-            st.markdown(f"**Show-up fee:** ${ExperimentConfig.SHOW_UP_FEE:.2f}")
-            st.markdown(f"**Selected task:** {selected_task}")
-            st.markdown(f"**Tokens earned:** {tokens_earned}")
-            st.markdown(f"**Token value:** ${token_value:.2f}")
+            st.write(f"**Show-up fee:** ${ExperimentConfig.SHOW_UP_FEE:.2f}")
+            st.write(f"**Selected task:** {selected_task}")
+            st.write(f"**Tokens earned:** {tokens_earned}")
+            st.write(f"**Token value:** ${token_value:.2f}")
             
             st.success(f"**Total Payment: ${total_payment:.2f}**")
         
-        # Data export options
+        # Data export options using clean Streamlit components
         st.subheader("📥 Research Data Export")
         
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            if st.button("📄 Download Complete Data", key="download_json"):
-                json_data = json.dumps(st.session_state.experiment_data, indent=2)
-                b64 = base64.b64encode(json_data.encode()).decode()
-                href = f'<a href="data:application/json;base64,{b64}" download="experiment_data_{data["participant_id"]}.json">📄 Download JSON</a>'
-                st.markdown(href, unsafe_allow_html=True)
+            # Complete data as JSON
+            json_data = json.dumps(st.session_state.experiment_data, indent=2)
+            st.download_button(
+                label="📄 Download Complete Data",
+                data=json_data,
+                file_name=f"experiment_data_{data['participant_id']}.json",
+                mime="application/json",
+                key="download_json"
+            )
         
         with col2:
-            if st.button("📊 Download Analysis Data", key="download_csv"):
-                # Create simplified analysis dataset
-                analysis_data = {
-                    'participant_id': data['participant_id'],
-                    'treatment': data['treatment'],
-                    'trivia_score': data['trivia_score'],
-                    'accuracy_rate': data.get('accuracy_rate', 0),
-                    'performance_level': data['performance_level'],
-                    'belief_own_performance': data['belief_own_performance'],
-                    'assigned_group': data['assigned_group'],
-                    'mechanism_used': data['mechanism_used'],
-                    'wtp_top_group': data['wtp_top_group'],
-                    'wtp_bottom_group': data['wtp_bottom_group'],
-                    'wtp_premium': wtp_premium,
-                    'belief_mechanism': data['belief_mechanism'],
-                    'overconfidence_measure': overconfidence_measure
-                }
-                
-                df = pd.DataFrame([analysis_data])
-                csv = df.to_csv(index=False)
-                b64 = base64.b64encode(csv.encode()).decode()
-                href = f'<a href="data:text/csv;base64,{b64}" download="analysis_data_{data["participant_id"]}.csv">📊 Download CSV</a>'
-                st.markdown(href, unsafe_allow_html=True)
+            # Analysis data as CSV
+            analysis_data = {
+                'participant_id': data['participant_id'],
+                'treatment': data['treatment'],
+                'trivia_score': data['trivia_score'],
+                'accuracy_rate': data.get('accuracy_rate', 0),
+                'performance_level': data['performance_level'],
+                'belief_own_performance': data['belief_own_performance'],
+                'assigned_group': data['assigned_group'],
+                'mechanism_used': data['mechanism_used'],
+                'wtp_top_group': data['wtp_top_group'],
+                'wtp_bottom_group': data['wtp_bottom_group'],
+                'wtp_premium': wtp_premium,
+                'belief_mechanism': data['belief_mechanism'],
+                'overconfidence_measure': overconfidence_measure
+            }
+            
+            df = pd.DataFrame([analysis_data])
+            csv_data = df.to_csv(index=False)
+            st.download_button(
+                label="📊 Download Analysis Data",
+                data=csv_data,
+                file_name=f"analysis_data_{data['participant_id']}.csv",
+                mime="text/csv",
+                key="download_csv"
+            )
         
         with col3:
             if st.button("🔄 Start New Session", key="new_session"):
@@ -1561,9 +1551,9 @@ class OverconfidenceExperiment:
                         st.markdown(href, unsafe_allow_html=True)
 
 def main():
-    """Main application entry point."""
+    """Main application entry point - completely clean."""
     try:
-        # Hide streamlit elements for professional appearance
+        # Only hide Streamlit UI elements
         st.markdown("""
         <style>
             #MainMenu {visibility: hidden;}
@@ -1581,7 +1571,7 @@ def main():
         st.error("Critical application error. Please refresh and try again.")
         logging.critical(f"Application error: {str(e)}", exc_info=True)
         
-        # Provide recovery options without self references
+        # Clean recovery options
         col1, col2 = st.columns(2)
         with col1:
             if st.button("🔄 Restart Experiment"):
@@ -1593,10 +1583,14 @@ def main():
                 if 'experiment_data' in st.session_state:
                     json_data = json.dumps(st.session_state.experiment_data, indent=2)
                     b64 = base64.b64encode(json_data.encode()).decode()
-                    href = f'<a href="data:application/json;base64,{b64}" download="emergency_backup.json">💾 Download Emergency Backup</a>'
-                    st.markdown(href, unsafe_allow_html=True)
+                    st.download_button(
+                        label="💾 Download Emergency Backup",
+                        data=json_data,
+                        file_name="emergency_backup.json",
+                        mime="application/json"
+                    )
     
-    # Research information sidebar
+    # Sidebar - completely clean
     with st.sidebar:
         st.markdown("### 🎓 Research Study Platform")
         st.markdown(f"""
@@ -1604,7 +1598,7 @@ def main():
         
         **Institution:** Center for Behavioral Economics  
         **PI:** Dr. Sarah Chen  
-        **Version:** 2.1.0 (Professional)
+        **Version:** 2.1.0 (Clean)
         
         ---
         
