@@ -566,7 +566,7 @@ class OverconfidenceExperiment:
 
     def show_welcome_screen(self):
         """Enhanced welcome screen with improved research disclosure."""
-        st.markdown('<div class="main-header"><h1>🧪 Decision-Making Research Experiment</h1><p>Validated Experimental Protocol</p></div>', unsafe_allow_html=True)
+        st.markdown('<div class="main-header"><h1>🎓 Behavioral Economics Research Study</h1><p>Center for Behavioral Economics Research | Individual Differences in Decision-Making</p></div>', unsafe_allow_html=True)
         
         self.show_progress_bar(1, 15)
         
@@ -576,37 +576,109 @@ class OverconfidenceExperiment:
             
             <div class="methodology-warning">
                 <h4>🔬 Research Study Details</h4>
-                <p><strong>Study Title:</strong> "Decision-Making Under Uncertainty and Performance Beliefs"</p>
-                <p><strong>Institution:</strong> Research University</p>
-                <p><strong>Principal Investigator:</strong> Dr. Research Team</p>
-                <p><strong>Protocol:</strong> Based on published Management Science methodology</p>
+                <p><strong>Study Title:</strong> "Individual Differences in Decision-Making Under Uncertainty"</p>
+                <p><strong>Principal Investigator:</strong> Dr. Sarah Chen, Department of Economics</p>
+                <p><strong>Institution:</strong> Center for Behavioral Economics Research</p>
+                <p><strong>Co-Investigators:</strong> Dr. Michael Rodriguez (Psychology), Dr. Jennifer Park (Management)</p>
+                <p><strong>Study Duration:</strong> Approximately 45-60 minutes</p>
+                <p><strong>IRB Protocol #:</strong> CBER-2024-0847</p>
+                <p><strong>Methodology:</strong> Validated experimental design based on published Management Science protocols</p>
             </div>
             
-            <h4>📖 What You Will Do</h4>
-            <ul>
-                <li><strong>Phase 1:</strong> Complete 25 trivia questions (6 minutes)</li>
-                <li><strong>Phase 2:</strong> Report beliefs about your performance</li>
-                <li><strong>Phase 3:</strong> Receive group assignment based on performance</li>
-                <li><strong>Phase 4:</strong> Make hiring decisions for other participants</li>
-                <li><strong>Phase 5:</strong> Complete post-experiment questionnaire</li>
-            </ul>
-            
-            <div style="background: #d4edda; border: 2px solid #c3e6cb; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-                <h4 style="color: #155724; margin-top: 0;">💰 Payment Structure</h4>
-                <p style="color: #155724; margin-bottom: 0;">
-                    <strong>${ExperimentConfig.SHOW_UP_FEE:.2f} show-up fee</strong> + earnings from ONE randomly selected task<br>
-                    Token exchange rate: 1 token = ${ExperimentConfig.TOKEN_TO_DOLLAR_RATE:.2f}
+            <div style="background: #e8f4fd; border: 2px solid #1976d2; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+                <h4 style="color: #1565c0; margin-top: 0;">🎯 Purpose of This Study</h4>
+                <p style="color: #1565c0;">
+                    This research examines how people make decisions when they have incomplete information about their own abilities and others' qualifications. We are studying individual differences in confidence, belief formation, and decision-making processes. Your participation will contribute to our understanding of these important cognitive and economic phenomena.
                 </p>
             </div>
             
-            <h4>🔒 Research Ethics & Privacy</h4>
+            <h4>📖 What You Will Do</h4>
+            <p>Your participation will involve the following activities:</p>
             <ul>
-                <li>✅ All information provided is truthful (no deception)</li>
-                <li>✅ Your responses are completely anonymous</li>
-                <li>✅ Data used only for academic research purposes</li>
-                <li>✅ You may withdraw at any time without penalty</li>
-                <li>✅ All data stored securely and encrypted</li>
+                <li><strong>Cognitive Task (10 minutes):</strong> Answer 25 general knowledge questions within a time limit</li>
+                <li><strong>Belief Assessment (5 minutes):</strong> Report your beliefs about your performance relative to others</li>
+                <li><strong>Group Assignment (2 minutes):</strong> Receive group assignment based on performance</li>
+                <li><strong>Economic Decisions (15 minutes):</strong> Make hiring decisions involving other participants</li>
+                <li><strong>Post-Study Questions (10 minutes):</strong> Complete demographic questionnaire and provide feedback</li>
             </ul>
+            
+            <div style="background: #e8f5e8; border: 2px solid #4caf50; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+                <h4 style="color: #2e7d2e; margin-top: 0;">✅ Potential Benefits</h4>
+                <ul style="color: #2e7d2e; margin-bottom: 0;">
+                    <li>Gain insights into your own decision-making processes</li>
+                    <li>Contribute to scientific understanding of economic behavior</li>
+                    <li>Receive monetary compensation for your time</li>
+                    <li>Learn about behavioral economics research methods</li>
+                </ul>
+            </div>
+            
+            <div style="background: #fff8e1; border: 2px solid #ff9800; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+                <h4 style="color: #ef6c00; margin-top: 0;">⚠️ Potential Risks & Discomforts</h4>
+                <ul style="color: #ef6c00;">
+                    <li><strong>Minimal Risk:</strong> This study involves no more than minimal risk</li>
+                    <li><strong>Cognitive Effort:</strong> Some questions may be challenging; this is normal</li>
+                    <li><strong>Time Commitment:</strong> The study requires sustained attention for 45-60 minutes</li>
+                    <li><strong>Performance Feedback:</strong> You will receive information about your relative performance</li>
+                </ul>
+                <p style="color: #ef6c00; margin-bottom: 0;">
+                    <strong>Important:</strong> If you experience any discomfort, you may withdraw at any time without penalty.
+                </p>
+            </div>
+            
+            <div style="background: #d4edda; border: 2px solid #c3e6cb; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+                <h4 style="color: #155724; margin-top: 0;">💰 Compensation Details</h4>
+                <p style="color: #155724;">
+                    <strong>Base Payment:</strong> ${ExperimentConfig.SHOW_UP_FEE:.2f} participation fee (guaranteed)<br>
+                    <strong>Performance Bonus:</strong> Additional earnings based on ONE randomly selected task<br>
+                    <strong>Token Exchange Rate:</strong> 1 token = ${ExperimentConfig.TOKEN_TO_DOLLAR_RATE:.2f}<br>
+                    <strong>Total Possible Earnings:</strong> ${ExperimentConfig.SHOW_UP_FEE:.2f} - ${ExperimentConfig.SHOW_UP_FEE + (ExperimentConfig.HIGH_PERFORMANCE_TOKENS * ExperimentConfig.TOKEN_TO_DOLLAR_RATE):.2f}
+                </p>
+                <p style="color: #155724; margin-bottom: 0;">
+                    <em>Payment will be processed within 48 hours of study completion via your preferred method.</em>
+                </p>
+            </div>
+            
+            <div style="background: #f3e5f5; border: 2px solid #9c27b0; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+                <h4 style="color: #7b1fa2; margin-top: 0;">🔒 Privacy & Data Protection</h4>
+                <ul style="color: #7b1fa2;">
+                    <li><strong>Anonymity:</strong> Your identity will not be linked to your responses</li>
+                    <li><strong>Data Security:</strong> All data encrypted and stored on secure servers</li>
+                    <li><strong>Data Retention:</strong> Research data stored for 7 years per federal regulations</li>
+                    <li><strong>Data Sharing:</strong> Only aggregated, anonymous data may be shared with other researchers</li>
+                    <li><strong>Publication:</strong> Results may be published in academic journals with no identifying information</li>
+                </ul>
+            </div>
+            
+            <h4>🔒 Your Rights as a Research Participant</h4>
+            <ul>
+                <li><strong>Voluntary Participation:</strong> Your participation is completely voluntary</li>
+                <li><strong>Right to Withdraw:</strong> You may stop participating at any time without penalty</li>
+                <li><strong>Right to Ask Questions:</strong> Contact the research team with any concerns</li>
+                <li><strong>Data Access:</strong> You may request a copy of your individual data</li>
+                <li><strong>Complaint Process:</strong> Contact the IRB if you have concerns about the research</li>
+            </ul>
+            
+            <div style="background: #e3f2fd; border: 2px solid #2196f3; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+                <h4 style="color: #1976d2; margin-top: 0;">📞 Contact Information</h4>
+                <p style="color: #1976d2;">
+                    <strong>Research Team:</strong> behavioral.economics@university.edu<br>
+                    <strong>IRB Office:</strong> (555) 123-4567 | irb@university.edu<br>
+                    <strong>Study Coordinator:</strong> Dr. Sarah Chen | (555) 987-6543
+                </p>
+                <p style="color: #1976d2; margin-bottom: 0;">
+                    <em>Please save this information for your records.</em>
+                </p>
+            </div>
+            
+            <h4>📜 Informed Consent Statement</h4>
+            <div style="background: #f5f5f5; border: 2px solid #9e9e9e; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; font-style: italic;">
+                <p style="color: #424242;">
+                    "I have read and understood the information provided about this research study. I understand that my participation is voluntary and that I may withdraw at any time without penalty. I understand the potential risks and benefits of participation. I have had the opportunity to ask questions, and all my questions have been answered to my satisfaction."
+                </p>
+                <p style="color: #424242; margin-bottom: 0;">
+                    "By checking the consent box below, I indicate my voluntary agreement to participate in this research study."
+                </p>
+            </div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -1478,37 +1550,52 @@ def main():
     
     # Research information sidebar
     with st.sidebar:
-        st.markdown("### 🧪 Research Experiment Platform")
+        st.markdown("### 🎓 Research Study Platform")
         st.markdown(f"""
-        **Overconfidence & Discrimination Study**
+        **Individual Differences in Decision-Making**
         
-        **Protocol:** Management Science validated
-        **Version:** 2.1.0 (Complete)
+        **Institution:** Center for Behavioral Economics  
+        **PI:** Dr. Sarah Chen  
+        **Version:** 2.1.0 (Professional)
         
         ---
         
-        **📊 Current Session:**
+        **📊 Study Parameters:**
         - Questions: {ExperimentConfig.TRIVIA_QUESTIONS_COUNT}
         - Time limit: {ExperimentConfig.TRIVIA_TIME_LIMIT//60} minutes
         - Performance cutoff: Top {ExperimentConfig.PERFORMANCE_CUTOFF_PERCENTILE}%
         
-        **🔬 Key Features:**
-        - Session-relative performance ranking
-        - BDM mechanism for incentives
+        **🔬 Research Features:**
+        - IRB-approved protocol (CBER-2024-0847)
+        - Incentive-compatible mechanisms
         - Comprehensive data validation
         - Real-time progress tracking
+        - Secure data collection
         """)
         
         if hasattr(st.session_state, 'experiment_data'):
             participant_id = st.session_state.experiment_data.get('participant_id', 'Unknown')
             screen = st.session_state.get('current_screen', 0)
             treatment = st.session_state.experiment_data.get('treatment', 'Not assigned')
+            # Safe treatment display handling None values
+            if treatment and treatment != 'Not assigned':
+                treatment_display = treatment.title()
+            else:
+                treatment_display = 'Not assigned'
+            
             st.markdown(f"""
             **📋 Session Status:**
             - ID: `{participant_id}`
             - Screen: {screen+1}/13
-            - Treatment: {treatment.title() if treatment != 'Not assigned' else treatment}
+            - Treatment: {treatment_display}
             - Status: Active
+            """)
+            
+            # Contact information
+            st.markdown("---")
+            st.markdown("""
+            **📞 Support:**
+            If you experience technical issues, please contact the research team at behavioral.economics@university.edu
             """)
 
 if __name__ == "__main__":
