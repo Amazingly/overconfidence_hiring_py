@@ -275,7 +275,7 @@ class OverconfidenceExperiment:
                 'post_experiment_questionnaire': {},
                 'completed_screens': [],
                 'screen_times': {},
-                'comprehension_attempts': {},
+                'comprehension_attempts': 0,
                 'end_time': None,
                 'validation_flags': {},
                 'metadata': {
