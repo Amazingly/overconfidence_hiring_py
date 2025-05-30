@@ -430,7 +430,7 @@ class OverconfidenceExperiment:
     def show_welcome_screen(self):
         """Clean welcome screen using native Streamlit components only."""
         st.title("🎓 Behavioral Economics Research Study")
-        st.markdown("**Center for Behavioral Economics Research | Individual Differences in Decision-Making**")
+        st.markdown("**Research Institute | Individual Differences in Decision-Making**")
         
         self.show_progress_bar(1, 15)
         
@@ -442,15 +442,15 @@ class OverconfidenceExperiment:
         
         **Study Title:** "Individual Differences in Decision-Making Under Uncertainty"
         
-        **Principal Investigator:** Dr. Sarah Chen, Department of Economics
+        **Principal Investigator:** Research Team Lead, Department of Economics
         
-        **Institution:** Center for Behavioral Economics Research
+        **Institution:** Academic Research Institute
         
-        **Co-Investigators:** Dr. Michael Rodriguez (Psychology), Dr. Jennifer Park (Management)
+        **Co-Investigators:** Psychology Department, Management Department
         
         **Study Duration:** Approximately 45-60 minutes
         
-        **IRB Protocol #:** CBER-2024-0847
+        **IRB Protocol #:** IRB-2024-XXXX
         
         **Methodology:** Validated experimental design based on published Management Science protocols
         """)
@@ -558,11 +558,11 @@ class OverconfidenceExperiment:
         st.info("""
         **📞 Contact Information**
         
-        **Research Team:** behavioral.economics@university.edu
+        **Research Team:** research.team@institution.edu
         
-        **IRB Office:** (555) 123-4567 | irb@university.edu
+        **IRB Office:** (XXX) XXX-XXXX | irb@institution.edu
         
-        **Study Coordinator:** Dr. Sarah Chen | (555) 987-6543
+        **Study Coordinator:** Research Team Lead | (XXX) XXX-XXXX
         
         **Please save this information for your records.**
         """)
@@ -939,7 +939,7 @@ class OverconfidenceExperiment:
                 
                 if all_correct:
                     st.success("✅ All correct! You understand the process.")
-                    st.success("🎉 Automatically advancing to hiring decisions...")
+                    st.info("🎉 Advancing to hiring decisions...")
                     
                     # Track successful completion
                     if 'comprehension_attempts' not in st.session_state.experiment_data:
@@ -948,7 +948,6 @@ class OverconfidenceExperiment:
                     st.session_state.experiment_data['comprehension_passed'] = True
                     
                     # Auto-advance to next screen
-                    time.sleep(1)  # Brief pause to show success message
                     st.session_state.current_screen = 8
                     st.rerun()
                 else:
@@ -960,10 +959,14 @@ class OverconfidenceExperiment:
                     st.markdown("2. 95%")
                     st.markdown("3. No, I don't know which mechanism was used")
                     
-                    # Track attempts
+                    # Track attempts - ensure it's initialized as integer
                     if 'comprehension_attempts' not in st.session_state.experiment_data:
                         st.session_state.experiment_data['comprehension_attempts'] = 0
-                    st.session_state.experiment_data['comprehension_attempts'] += 1
+                    # Check if it's actually an integer before incrementing
+                    if isinstance(st.session_state.experiment_data['comprehension_attempts'], int):
+                        st.session_state.experiment_data['comprehension_attempts'] += 1
+                    else:
+                        st.session_state.experiment_data['comprehension_attempts'] = 1
         else:
             st.info("Please answer all three questions before checking your answers.")
 
@@ -1415,8 +1418,8 @@ def main():
         st.markdown(f"""
         **Individual Differences in Decision-Making**
         
-        **Institution:** Center for Behavioral Economics  
-        **PI:** Dr. Sarah Chen  
+        **Institution:** Academic Research Institute  
+        **PI:** Research Team Lead  
         **Version:** 2.1.0 (Clean)
         
         ---
@@ -1427,7 +1430,7 @@ def main():
         - Performance cutoff: Top {ExperimentConfig.PERFORMANCE_CUTOFF_PERCENTILE}%
         
         **🔬 Research Features:**
-        - IRB-approved protocol (CBER-2024-0847)
+        - IRB-approved protocol (IRB-2024-XXXX)
         - Incentive-compatible mechanisms
         - Comprehensive data validation
         - Real-time progress tracking
@@ -1456,7 +1459,7 @@ def main():
             st.markdown("---")
             st.markdown("""
             **📞 Support:**
-            If you experience technical issues, please contact the research team at behavioral.economics@university.edu
+            If you experience technical issues, please contact the research team at research.team@institution.edu
             """)
 
 if __name__ == "__main__":
